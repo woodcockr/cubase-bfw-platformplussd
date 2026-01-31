@@ -20,6 +20,7 @@ export class IconPlatformMplus {
 
   midiPortPair: PortPair;
   ccPortPair: PortPair;
+  sdPortPair: PortPair;
 
   lcdManager: LcdManager;
 
@@ -39,9 +40,14 @@ export class IconPlatformMplus {
     // create objects representing the hardware's MIDI ports
     this.midiPortPair = makePortPair(driver, false)
     this.ccPortPair = makePortPair(driver, false)
+    this.sdPortPair = makePortPair(driver, false)
     driver.makeDetectionUnit().detectPortPair(this.midiPortPair.input, this.midiPortPair.output)
       .expectInputNameContains('Platform M+')
       .expectOutputNameContains('Platform M+')
+
+   driver.makeDetectionUnit().detectPortPair(this.sdPortPair.input, this.sdPortPair.output)
+      .expectInputNameContains('Platform M+ SD Input')
+      .expectOutputNameContains('Platform M+ SD Output')
 
     driver.makeDetectionUnit().detectPortPair(this.ccPortPair.input, this.ccPortPair.output)
       .expectOutputNameEquals('Icon CC')
@@ -72,6 +78,19 @@ export interface MasterControl {
     mixer: LedButton,
     read: LedButton,
     write: LedButton,
+    // Additional buttons for Stream Deck functionality
+    subPageMixer: LedButton,
+    subPageControlRoom: LedButton,
+    subPageMIDICC: LedButton,
+    subPageEQ: LedButton,
+    subPageSendsQC: LedButton,
+    subPagePreFilter: LedButton,
+    subPageCueSends: LedButton,
+    subPageGate: LedButton,
+    subPageCompressor: LedButton,
+    subPageTools: LedButton,
+    subPageSaturator: LedButton,
+    subPageLimiter: LedButton,
   }
 }
 
@@ -103,11 +122,30 @@ export function makeMasterControl(surface: DecoratedDeviceSurface, x: number, y:
   const fader_x = x
   const fader_y = y + 3
 
+  // Stream Deck Buttons
+  const sd_button_x = fader_x + 15
+  const sd_button_y = y
+
   return {
     buttons: {
       mixer: surface.makeLedButton(fader_x + 3, fader_y + 6, 3, 3),
       read: surface.makeLedButton(fader_x + 3, fader_y + 9, 3, 3),
       write: surface.makeLedButton(fader_x + 3, fader_y + 12, 3, 3),
+      // Additional buttons for Stream Deck functionality
+      subPageMixer: surface.makeLedButton(sd_button_x, sd_button_y, 3, 3),
+      subPageControlRoom: surface.makeLedButton(sd_button_x + 3, sd_button_y, 3, 3),
+      subPageMIDICC: surface.makeLedButton(sd_button_x + 6, sd_button_y, 3, 3),
+      // EQ/Sends/PreFilter/CueSends
+      subPageEQ: surface.makeLedButton(sd_button_x, sd_button_y + 3, 3, 3),
+      subPageSendsQC: surface.makeLedButton(sd_button_x + 3, sd_button_y + 3, 3, 3),
+      subPagePreFilter: surface.makeLedButton(sd_button_x + 6, sd_button_y + 3, 3, 3),
+      subPageCueSends: surface.makeLedButton(sd_button_x + 9, sd_button_y + 3, 3, 3),
+      // Channel Strip
+      subPageGate: surface.makeLedButton(sd_button_x, sd_button_y + 6, 3, 3),
+      subPageCompressor: surface.makeLedButton(sd_button_x + 3, sd_button_y + 6, 3, 3),
+      subPageTools: surface.makeLedButton(sd_button_x + 6, sd_button_y + 6, 3, 3),
+      subPageSaturator: surface.makeLedButton(sd_button_x + 9, sd_button_y + 6, 3, 3),
+      subPageLimiter: surface.makeLedButton(sd_button_x + 12, sd_button_y + 6, 3, 3),
     },
     fader: surface.makeTouchSensitiveFader(fader_x, fader_y, 3, 18),
   }

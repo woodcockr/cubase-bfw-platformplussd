@@ -1,12 +1,9 @@
-import { makePageWithDefaults } from "./master_controls"
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
-import { ActivationCallbacks } from "./midi/connection"
+import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks) {
-    var page = makePageWithDefaults('Selected Channel', device, deviceDriver, globalBooleanVariables, activationCallbacks)
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
 
-    var faderSubPageArea = page.makeSubPageArea('Faders')
     var subPageSendsQC = faderSubPageArea.makeSubPage('SendsQC')
     var subPageEQ = faderSubPageArea.makeSubPage('EQ')
     var subPageCueSends = faderSubPageArea.makeSubPage('CueSends')
@@ -57,11 +54,6 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
     page.makeValueBinding(device.channelControls[1].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[2].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[3].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle().setSubPage(subPageSendsQC)
-
-    page.makeActionBinding(device.channelControls[0].buttons.record.mSurfaceValue, subPageSendsQC.mAction.mActivate).setSubPage(subPageSendsQC)
-    page.makeActionBinding(device.channelControls[1].buttons.record.mSurfaceValue, subPageEQ.mAction.mActivate).setSubPage(subPageSendsQC)
-    page.makeActionBinding(device.channelControls[2].buttons.record.mSurfaceValue, subPagePreFilter.mAction.mActivate).setSubPage(subPageSendsQC)
-    page.makeActionBinding(device.channelControls[3].buttons.record.mSurfaceValue, subPageCueSends.mAction.mActivate).setSubPage(subPageSendsQC)
 
     // EQ Subpage
     const eqBand = []
@@ -141,8 +133,7 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
     page.makeValueBinding(device.channelControls[2].scribbleStrip.trackTitle, preFilter.mLowCutFreq).setSubPage(subPagePreFilter);
     page.makeValueBinding(fader3SurfaceValue, preFilter.mLowCutFreq).setSubPage(subPagePreFilter)
 
-    page.mOnActivate =  (activeDevice) => {
-        // console.log('from script: Platform M+ page "Selected Track" activated')
+    function resetSubPageLeds(activeDevice: MR_ActiveDevice) {
         // Set the Rec leds which correspond to the different subages to their starting state
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, true)
@@ -156,6 +147,8 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
     }
     // ? Action binding is not a toggle and LedButton - wants to turn the light off on release
     subPageSendsQC.mOnActivate = (activeDevice) => {
+        console.log('from script: Platform M+ page "Sends QC" activated')
+        resetSubPageLeds(activeDevice)
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, true)
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 0, 127])
@@ -164,6 +157,8 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 0, 0])
     }
     subPageEQ.mOnActivate = (activeDevice) => {
+        console.log('from script: Platform M+ page "EQ" activated')
+        resetSubPageLeds(activeDevice)
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, false)
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 1, 127])
@@ -172,6 +167,8 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 1, 0])
     }
     subPagePreFilter.mOnActivate = (activeDevice) => {
+        console.log('from script: Platform M+ page "PreFilter" activated')
+        resetSubPageLeds(activeDevice)
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, false)
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 2, 127])
@@ -180,6 +177,8 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 2, 0])
     }
     subPageCueSends.mOnActivate = (activeDevice) => {
+        console.log('from script: Platform M+ page "Cue Sends" activated')
+        resetSubPageLeds(activeDevice)
         globalBooleanVariables.displayChannelValueName.set(activeDevice, false)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, false)
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 3, 127])
@@ -188,5 +187,9 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 3, 0])
     }
 
-    return page
+  // Stream Deck controls
+  page.makeActionBinding(device.master.buttons.subPageEQ.mSurfaceValue, subPageEQ.mAction.mActivate)
+  page.makeActionBinding(device.master.buttons.subPageSendsQC.mSurfaceValue, subPageSendsQC.mAction.mActivate)
+  page.makeActionBinding(device.master.buttons.subPagePreFilter.mSurfaceValue, subPagePreFilter.mAction.mActivate)
+  page.makeActionBinding(device.master.buttons.subPageCueSends.mSurfaceValue, subPageCueSends.mAction.mActivate)
 }

@@ -94,5 +94,6 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
       globalBooleanVariables.isValueDisplayModeActive.toggle(context);
     }
   };
+
   return page
 }

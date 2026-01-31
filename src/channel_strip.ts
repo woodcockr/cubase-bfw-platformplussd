@@ -2,16 +2,15 @@ import { makePageWithDefaults } from "./master_controls"
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
 import { ActivationCallbacks } from "./midi/connection"
+import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks) {
-    var page = makePageWithDefaults('ChannelStrip', device, deviceDriver, globalBooleanVariables, activationCallbacks)
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
 
-    var strip = page.makeSubPageArea('Strip')
-    var gatePage = strip.makeSubPage('Gate')
-    var compressorPage = strip.makeSubPage('Compressor')
-    var toolsPage = strip.makeSubPage('Tools')
-    var saturatorPage = strip.makeSubPage('Saturator')
-    var limiterPage = strip.makeSubPage('Limiter')
+    var gatePage = faderSubPageArea.makeSubPage('Gate')
+    var compressorPage = faderSubPageArea.makeSubPage('Compressor')
+    var toolsPage = faderSubPageArea.makeSubPage('Tools')
+    var saturatorPage = faderSubPageArea.makeSubPage('Saturator')
+    var limiterPage = faderSubPageArea.makeSubPage('Limiter')
 
 
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
@@ -45,35 +44,20 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         var faderStrip = device.channelControls[idx]
         var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx] as keyof MR_HostStripEffectSlotFolder
         for (var i = 0; i < 2; i++) { // ! Workaround for Cubase 12.0.60+ bug
-            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn) // ? This doesn't work that well cause of MIDI Remote API.
-            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
+            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(gatePage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(gatePage)
+            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(compressorPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(compressorPage)
+            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(toolsPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(toolsPage)
+            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(saturatorPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(saturatorPage)
+            page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(limiterPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(limiterPage)
         }
     }
 
-    page.makeActionBinding(device.channelControls[0].buttons.select.mSurfaceValue, gatePage.mAction.mActivate)
-    page.makeActionBinding(device.channelControls[1].buttons.select.mSurfaceValue, compressorPage.mAction.mActivate)
-    page.makeActionBinding(device.channelControls[2].buttons.select.mSurfaceValue, toolsPage.mAction.mActivate)
-    page.makeActionBinding(device.channelControls[3].buttons.select.mSurfaceValue, saturatorPage.mAction.mActivate)
-    page.makeActionBinding(device.channelControls[4].buttons.select.mSurfaceValue, limiterPage.mAction.mActivate)
-
-    // ? Could add a custom display update here to add the name of the plugin which is active - it's the ChannelTitle or mOnChangePluginIdentity- but needs to be on the second line in the display
-    gatePage.mOnActivate = (activeDevice) => {
-        device.lcdManager.setTextLine(activeDevice, 0, "Gate")
-    }
-    compressorPage.mOnActivate = (activeDevice) => {
-        device.lcdManager.setTextLine(activeDevice, 0, "Compressor")
-    }
-    toolsPage.mOnActivate = (activeDevice) => {
-        device.lcdManager.setTextLine(activeDevice, 0, "Tools")
-    }
-    saturatorPage.mOnActivate = (activeDevice) => {
-        device.lcdManager.setTextLine(activeDevice, 0, "Saturator")
-    }
-    limiterPage.mOnActivate = (activeDevice) => {
-        device.lcdManager.setTextLine(activeDevice, 0, "Limiter")
-    }
-
-    page.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    function resetSubPageLeds(activeDevice: MR_ActiveDevice) {
         // console.log('from script: Platform M+ page "Channel Strip" activated')
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
         globalBooleanVariables.displayParameterTitle.set(activeDevice, true)
@@ -88,5 +72,32 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
         //   midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
     }
 
-    return page
+    // ? Could add a custom display update here to add the name of the plugin which is active - it's the ChannelTitle or mOnChangePluginIdentity- but needs to be on the second line in the display
+    gatePage.mOnActivate = (activeDevice) => {
+        resetSubPageLeds(activeDevice)
+        device.lcdManager.setTextLine(activeDevice, 0, "Gate")
+    }
+    compressorPage.mOnActivate = (activeDevice) => {
+        resetSubPageLeds(activeDevice)
+        device.lcdManager.setTextLine(activeDevice, 0, "Compressor")
+    }
+    toolsPage.mOnActivate = (activeDevice) => {
+        resetSubPageLeds(activeDevice)
+        device.lcdManager.setTextLine(activeDevice, 0, "Tools")
+    }
+    saturatorPage.mOnActivate = (activeDevice) => {
+        resetSubPageLeds(activeDevice)
+        device.lcdManager.setTextLine(activeDevice, 0, "Saturator")
+    }
+    limiterPage.mOnActivate = (activeDevice) => {
+        resetSubPageLeds(activeDevice)
+        device.lcdManager.setTextLine(activeDevice, 0, "Limiter")
+    }
+
+    // Stream Deck controls
+    page.makeActionBinding(device.master.buttons.subPageGate .mSurfaceValue, gatePage.mAction.mActivate)
+    page.makeActionBinding(device.master.buttons.subPageCompressor .mSurfaceValue, compressorPage.mAction.mActivate)
+    page.makeActionBinding(device.master.buttons.subPageTools .mSurfaceValue, toolsPage.mAction.mActivate)
+    page.makeActionBinding(device.master.buttons.subPageSaturator .mSurfaceValue, saturatorPage.mAction.mActivate)
+    page.makeActionBinding(device.master.buttons.subPageLimiter .mSurfaceValue, limiterPage.mAction.mActivate)
 }

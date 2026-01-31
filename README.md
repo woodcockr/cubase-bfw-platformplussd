@@ -5,10 +5,17 @@ Install required node packages:
 `npm install`
 
 
+TODO:
+-----
+- [] Each new sub Page needs to have the portions of the surface it doesn't use either unbound or bound to something useful for that page
+  - Use a dummy value binding like Control Room has been configured to do for any unused surface elements.
+- [] Ch strip: Would be helpful if status lights or sd buttons displayed whether the selected strip module was loaded, active or bypassed
+
 
 Known Issues:
 ------------
-Activate plugin doesn't work on channel strips
+
+# Activate plugin doesn't work on channel strips
 
 
 

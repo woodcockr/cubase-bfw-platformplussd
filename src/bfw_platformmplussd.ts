@@ -50,11 +50,13 @@ activationCallbacks.addCallback((context) => {
   globalBooleanVariables.areMotorsActive.set(context, true);
 });
 
-var mixerPage = decoratePage(mixer.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var selectedTrackPage = decoratePage(selected_track.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var channelStripPage = decoratePage(channel_strip.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var controlRoomPage = decoratePage(control_room.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var midiPage = decoratePage(midi.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-const timerUtils = makeTimerUtils(deviceDriver, mixerPage, surface, isAPIVersion1_1);
+var page = decoratePage(makePageWithDefaults('Main', device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
+var faderSubPageArea = page.makeSubPageArea('MixerArea')
+mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);

@@ -1,16 +1,10 @@
-import { makePageWithDefaults } from "./master_controls"
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
-import { ActivationCallbacks } from "./midi/connection"
+import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks ) {
-  var page = makePageWithDefaults('Mixer', device, deviceDriver, globalBooleanVariables, activationCallbacks)
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
 
-  var FaderSubPageArea = page.makeSubPageArea('FadersKnobs')
-  var subPageFaderVolume = FaderSubPageArea.makeSubPage('Volume')
-
-  var ButtonSubPageArea = page.makeSubPageArea('Buttons')
-  var subPageButtonDefaultSet = ButtonSubPageArea.makeSubPage('DefaultSet')
+  var subPageMixer = faderSubPageArea.makeSubPage('Mixer')
 
   var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone("AudioInstrBanks")
       .setFollowVisibility(true)
@@ -28,21 +22,20 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
       var rec_buttonSurfaceValue = device.channelControls[channelIndex].buttons.record.mSurfaceValue;
 
       // Scribble Strip
-      page.makeValueBinding(trackTitle, hostMixerBankChannel.mValue.mVolume).setSubPage(subPageFaderVolume);
+      page.makeValueBinding(trackTitle, hostMixerBankChannel.mValue.mVolume).setSubPage(subPageMixer);
       // FaderKnobs - Volume, Pan, Editor Open
-      page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
-      page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
-      page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-      page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume) // ! Duplicate to overcome C12.0.60+ bug
-      page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageButtonDefaultSet)
-      page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
-      page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
-      page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
-
+      page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageMixer)
+      page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageMixer)
+      page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMixer)
+    // TODO  page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMixer) // ! Duplicate to overcome C12.0.60+ bug
+      page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageMixer)
+      page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageMixer)
+      page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageMixer)
+      page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageMixer)
   }
 
-  page.mOnActivate = (activeDevice: MR_ActiveDevice) => {
-      // console.log('from script: Platform M+ page "Mixer" activated')
+  subPageMixer.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+      console.log('from script: Platform M+ page "Mixer" activated')
       globalBooleanVariables.displayChannelValueName.set(activeDevice, false)
       globalBooleanVariables.displayParameterTitle.set(activeDevice, false)
       globalBooleanVariables.areKnobsBound.set(activeDevice, false);
@@ -50,5 +43,7 @@ export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDrive
       globalBooleanVariables.refreshDisplay.toggle(activeDevice); // Force display update in case there are no active bindings
   }
 
-  return page
+  // Stream Deck controls
+  page.makeActionBinding(device.master.buttons.subPageMixer.mSurfaceValue, subPageMixer.mAction.mActivate)
+
 }
