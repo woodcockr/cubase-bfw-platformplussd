@@ -5,7 +5,7 @@ import { LcdManager } from "./midi/LcdManager";
 import { midi_cc } from "./config";
 import { DecoratedFactoryMappingPage } from "./decorators/page";
 
-export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables, dummy: MR_HostValueVariable) {
 
 
   var subPageMIDICC = faderSubPageArea.makeSubPage('MIDI CC')
@@ -37,6 +37,21 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
       LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(midi_cc[i].title))
     )
     makeMidiCCBinding(page, subPageMIDICC, name, midi_cc[i].cc, i)
+  }
+
+  // Dummy bindings to clear out any from other subpages for unused surface controls
+  // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+  for (var i = 0; i < device.numStrips; ++i) {
+    page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
+    page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
+    page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
+    page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
+
+    var knobSurfaceValue = device.channelControls[i].encoder.mEncoderValue;
+    var knobPushValue = device.channelControls[i].encoder.mPushValue;
+
+    page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(subPageMIDICC);
+    page.makeValueBinding(knobPushValue, dummy).setSubPage(subPageMIDICC);
   }
 
   page.mOnActivate = (context: MR_ActiveDevice) => {

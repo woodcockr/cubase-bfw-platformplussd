@@ -2,7 +2,7 @@ import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
 import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables, dummy: MR_HostValueVariable) {
 
     var subPageSendsQC = faderSubPageArea.makeSubPage('SendsQC')
     var subPageEQ = faderSubPageArea.makeSubPage('EQ')
@@ -48,12 +48,20 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
     page.makeValueBinding(device.channelControls[5].buttons.record.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[6].buttons.record.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[7].buttons.record.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageSendsQC)
+    for (var idx = 0; idx < 4; ++idx) {
+        page.makeValueBinding(device.channelControls[idx].buttons.record.mSurfaceValue, dummy).setTypeToggle().setSubPage(subPageSendsQC)
+    }
 
     // EQ Related but on Sends page so you know EQ activated...not sure the best option but hey, more buttons and lights is cool!
     page.makeValueBinding(device.channelControls[0].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[1].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[2].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(device.channelControls[3].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle().setSubPage(subPageSendsQC)
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 4; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setTypeToggle().setSubPage(subPageSendsQC)
+    }
 
     // EQ Subpage
     const eqBand = []
@@ -81,6 +89,25 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
         page.makeValueBinding(fader2SurfaceValue, eqBand[idx].mFreq).setSubPage(subPageEQ)
     }
 
+    // EQ Related but on Sends page so you know EQ activated...not sure the best option but hey, more buttons and lights is cool!
+    page.makeValueBinding(device.channelControls[0].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle().setSubPage(subPageEQ)
+    page.makeValueBinding(device.channelControls[1].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle().setSubPage(subPageEQ)
+    page.makeValueBinding(device.channelControls[2].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle().setSubPage(subPageEQ)
+    page.makeValueBinding(device.channelControls[3].buttons.solo.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle().setSubPage(subPageEQ)
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 4; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setTypeToggle().setSubPage(subPageEQ)
+    }
+
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 0; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(subPageEQ);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(subPageEQ);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(subPageEQ);
+    }
+
     /// CueSends subPage
     for (var idx = 0; idx < selectedTrackChannel.mCueSends.getSize(); ++idx) {
         var knobSurfaceValue = device.channelControls[idx].encoder.mEncoderValue;
@@ -95,7 +122,27 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
 
         page.makeValueBinding(device.channelControls[idx].buttons.select.mSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageCueSends)
         page.makeValueBinding(device.channelControls[idx].buttons.mute.mSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mPrePost).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(device.channelControls[idx].buttons.solo.mSurfaceValue, dummy).setSubPage(subPageCueSends)
+        page.makeValueBinding(device.channelControls[idx].buttons.record.mSurfaceValue, dummy).setSubPage(subPageCueSends)
     }
+    // Dummy out any unused strips
+    for (var idx = selectedTrackChannel.mCueSends.getSize(); idx < device.numStrips; ++idx) {
+        var knobSurfaceValue = device.channelControls[idx].encoder.mEncoderValue;
+        var knobPushValue = device.channelControls[idx].encoder.mPushValue;
+        var trackTitle = device.channelControls[idx].scribbleStrip.trackTitle;
+        var faderSurfaceValue = device.channelControls[idx].fader.mSurfaceValue;
+
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(subPageCueSends)
+        page.makeValueBinding(knobPushValue, dummy).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(trackTitle, dummy).setSubPage(subPageCueSends);
+        page.makeValueBinding(faderSurfaceValue, dummy).setSubPage(subPageCueSends)
+
+        page.makeValueBinding(device.channelControls[idx].buttons.select.mSurfaceValue,dummy).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(device.channelControls[idx].buttons.mute.mSurfaceValue, dummy).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(device.channelControls[idx].buttons.solo.mSurfaceValue, dummy).setSubPage(subPageCueSends)
+        page.makeValueBinding(device.channelControls[idx].buttons.record.mSurfaceValue, dummy).setSubPage(subPageCueSends)
+    }
+
 
     // PreFilter subPage
     var knobSurfaceValue = device.channelControls[0].encoder.mEncoderValue;
@@ -113,10 +160,16 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
     var preFilter = selectedTrackChannel.mPreFilter
 
     page.makeValueBinding(device.channelControls[0].buttons.select.mSurfaceValue, preFilter.mBypass).setTypeToggle().setSubPage(subPagePreFilter)
-    page.makeValueBinding(device.channelControls[0].buttons.mute.mSurfaceValue, preFilter.mPhaseSwitch).setTypeToggle().setSubPage(subPagePreFilter)
-
     page.makeValueBinding(device.channelControls[1].buttons.select.mSurfaceValue, preFilter.mHighCutOn).setTypeToggle().setSubPage(subPagePreFilter)
     page.makeValueBinding(device.channelControls[2].buttons.select.mSurfaceValue, preFilter.mLowCutOn).setTypeToggle().setSubPage(subPagePreFilter)
+    for (var i = 3; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(subPagePreFilter);
+    }
+
+    page.makeValueBinding(device.channelControls[0].buttons.mute.mSurfaceValue, preFilter.mPhaseSwitch).setTypeToggle().setSubPage(subPagePreFilter)
+    for (var i = 1; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(subPagePreFilter);
+    }
 
     page.makeValueBinding(knobSurfaceValue, preFilter.mPhaseSwitch ).setSubPage(subPagePreFilter) // ? No way to remove a valueBinding that is on another subpage? Duplicate yes but nothing else to set it too
     page.makeValueBinding(knob2SurfaceValue, preFilter.mHighCutSlope).setSubPage(subPagePreFilter)
@@ -133,6 +186,21 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
     page.makeValueBinding(device.channelControls[2].scribbleStrip.trackTitle, preFilter.mLowCutFreq).setSubPage(subPagePreFilter);
     page.makeValueBinding(fader3SurfaceValue, preFilter.mLowCutFreq).setSubPage(subPagePreFilter)
 
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 0; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(subPagePreFilter);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(subPagePreFilter);
+    }
+    for (var i = 3; i < device.numStrips; ++i) {
+        var knobSurfaceValue = device.channelControls[i].encoder.mEncoderValue;
+        var knobPushValue = device.channelControls[i].encoder.mPushValue;
+
+        page.makeValueBinding(device.channelControls[i].fader.mSurfaceValue, dummy).setSubPage(subPagePreFilter);
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(subPagePreFilter);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(subPagePreFilter);
+    }
+
     function resetSubPageLeds(activeDevice: MR_ActiveDevice) {
         // Set the Rec leds which correspond to the different subages to their starting state
         globalBooleanVariables.displayChannelValueName.set(activeDevice, true)
@@ -140,7 +208,7 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
         globalBooleanVariables.areKnobsBound.set(activeDevice, false);
         globalBooleanVariables.areFadersBound.set(activeDevice, false);
         globalBooleanVariables.refreshDisplay.toggle(activeDevice); // Force display update in case there are no active bindings
-        device.midiPortPair.output.sendMidi(activeDevice, [0x90, 0, 127])
+        device.midiPortPair.output.sendMidi(activeDevice, [0x90, 0, 0])
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 1, 0])
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 2, 0])
         device.midiPortPair.output.sendMidi(activeDevice, [0x90, 3, 0])

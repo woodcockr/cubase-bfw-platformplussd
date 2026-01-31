@@ -4,7 +4,7 @@ import { GlobalBooleanVariables } from "./midi/binding"
 import { ActivationCallbacks } from "./midi/connection"
 import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables, dummy: MR_HostValueVariable) {
 
     var gatePage = faderSubPageArea.makeSubPage('Gate')
     var compressorPage = faderSubPageArea.makeSubPage('Compressor')
@@ -40,6 +40,24 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
         page.makeValueBinding(trackTitle, limiter).setSubPage(limiterPage)
     }
 
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 0; i < device.numStrips; ++i) {
+        var knobSurfaceValue = device.channelControls[i].encoder.mEncoderValue;
+        var knobPushValue = device.channelControls[i].encoder.mPushValue;
+
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(limiterPage);
+        page.makeValueBinding(knobPushValue, dummy).setSubPage(limiterPage);
+    }
+
     for (var idx = 0; idx < 5; ++idx) {
         var faderStrip = device.channelControls[idx]
         var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx] as keyof MR_HostStripEffectSlotFolder
@@ -54,7 +72,43 @@ export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea
             page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(saturatorPage)
             page.makeValueBinding(faderStrip.buttons.record.mSurfaceValue, stripEffects[type].mOn).setSubPage(limiterPage) // ? This doesn't work that well cause of MIDI Remote API.
             page.makeValueBinding(faderStrip.buttons.mute.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle().setSubPage(limiterPage)
+
+            page.makeValueBinding(faderStrip.buttons.select.mSurfaceValue, dummy).setSubPage(gatePage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.solo.mSurfaceValue, dummy).setSubPage(gatePage)
+            page.makeValueBinding(faderStrip.buttons.select.mSurfaceValue, dummy).setSubPage(compressorPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.solo.mSurfaceValue, dummy).setSubPage(compressorPage)
+            page.makeValueBinding(faderStrip.buttons.select.mSurfaceValue, dummy).setSubPage(toolsPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.solo.mSurfaceValue, dummy).setSubPage(toolsPage)
+            page.makeValueBinding(faderStrip.buttons.select.mSurfaceValue, dummy).setSubPage(saturatorPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.solo.mSurfaceValue, dummy).setSubPage(saturatorPage)
+            page.makeValueBinding(faderStrip.buttons.select.mSurfaceValue, dummy).setSubPage(limiterPage) // ? This doesn't work that well cause of MIDI Remote API.
+            page.makeValueBinding(faderStrip.buttons.solo.mSurfaceValue, dummy).setSubPage(limiterPage)
         }
+    }
+
+    // Dummy bindings to clear out any from other subpages for unused surface controls
+    // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
+    for (var i = 5; i < device.numStrips; ++i) {
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(gatePage);
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(compressorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(toolsPage);
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(saturatorPage);
+        page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(limiterPage);
+        page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(limiterPage);
+        page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(limiterPage);
+        page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(limiterPage);
     }
 
     function resetSubPageLeds(activeDevice: MR_ActiveDevice) {

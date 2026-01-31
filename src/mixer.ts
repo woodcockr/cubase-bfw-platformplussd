@@ -2,7 +2,7 @@ import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
 import { DecoratedFactoryMappingPage } from "./decorators/page"
 
-export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables) {
+export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables, dummy: MR_HostValueVariable) {
 
   var subPageMixer = faderSubPageArea.makeSubPage('Mixer')
 

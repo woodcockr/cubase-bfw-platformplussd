@@ -51,12 +51,14 @@ activationCallbacks.addCallback((context) => {
 });
 
 var page = decoratePage(makePageWithDefaults('Main', device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
+// Dummy variable for unused controls in subpages
+const dummy = page.mCustom.makeHostValueVariable("null");
 var faderSubPageArea = page.makeSubPageArea('MixerArea')
-mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
-selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
-channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
-control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
-midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables)
+mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
 const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);
