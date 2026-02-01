@@ -6,7 +6,9 @@ import "core-js/actual/array/flat-map";
 import "core-js/actual/string/pad-start";
 import "core-js/actual/string/replace-all";
 import "core-js/actual/object/entries";
+import "core-js/actual/object/values";
 import "core-js/actual/reflect/construct";
+import "core-js/actual/map";
 
 // @ts-ignore Workaround because the core-js polyfill doesn't play nice with SWC:
 Reflect.get = undefined;
@@ -20,7 +22,6 @@ import { makeTimerUtils } from "./util";
 import { createGlobalBooleanVariables, bindDeviceToMidi } from "./midi/binding"
 import { IconPlatformMplus, ChannelSurfaceElements, makeChannelControls, makeMasterControl, makeTransport } from "./icon_elements";
 import { makePageWithDefaults } from "./master_controls"
-import { setTextOfColumn, setTextOfLine, makeLabel } from "./helper"
 import * as mixer from "./mixer"
 import * as control_room from "./control_room"
 import * as midi from "./midi"

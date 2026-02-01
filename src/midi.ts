@@ -1,71 +1,95 @@
+/**
+ * MIDI CC subpage - Using BindingCreator with custom handlers
+ *
+ * This module uses BindingCreator for structure but adds custom handlers
+ * for MIDI output since this requires device-specific logic.
+ *
+ * Refactored approach:
+ * - Uses MIDI_CONFIG for binding structure
+ * - Extends bindings with custom mOnValueChange handlers
+ * - Custom activation for LCD initialization
+ */
+
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
-import { LcdManager } from "./midi/LcdManager";
+import { LcdManager } from "./midi/LcdManager"
+import { midi_cc } from "./config"
+import { DecoratedFactoryMappingPage } from "./decorators/page"
+import { BindingCreator } from "./config/bindingCreator"
+import { MIDI_CONFIG } from "./config/subpages/midi.config"
 
-import { midi_cc } from "./config";
-import { DecoratedFactoryMappingPage } from "./decorators/page";
+export function makeSubPages(
+  page: DecoratedFactoryMappingPage,
+  faderSubPageArea: any, // MR_SubPageArea
+  device: IconPlatformMplus,
+  globalBooleanVariables: GlobalBooleanVariables,
+  dummy: any // MR_HostValueVariable
+) {
+  const creator = new BindingCreator(page, device, dummy, globalBooleanVariables)
 
-export function makeSubPages(page: DecoratedFactoryMappingPage, faderSubPageArea: MR_SubPageArea, device: IconPlatformMplus, globalBooleanVariables: GlobalBooleanVariables, dummy: MR_HostValueVariable) {
+  // Create custom config with per-channel host variables
+  const customConfig = { ...MIDI_CONFIG }
+  const bindings: any[] = []
 
-
-  var subPageMIDICC = faderSubPageArea.makeSubPage('MIDI CC')
-
-  function makeMidiCCBinding(page: MR_FactoryMappingPage, subPageMIDICC: MR_SubPage, displayName: string, cc: number, fader: number) {
-    // ? I have no idea what page.mCustom.makeHostValueVariable actually does- all I know is I can make a value binding this way. I can't seem to be able to look it up
-    // ? or access it all once made.
-    page.makeValueBinding(device.channelControls[fader].fader.mSurfaceValue, page.mCustom.makeHostValueVariable(displayName)).setValueTakeOverModeJump().setSubPage(subPageMIDICC)
-      .mOnValueChange = (activeDevice: MR_ActiveDevice, mapping: any, value: number, value2: any) => {
-        var ccValue = Math.ceil(value * 127)
-        var pitchBendValue = Math.ceil(value * 16383)
-        var val1 = pitchBendValue % 128
-        var val2 = Math.floor(pitchBendValue / 128)
-
-        // this is the value going back to the icon Fader
-        device.channelControls[fader].fader.mSurfaceValue.setProcessValue(activeDevice, value);
-        // this is the value going back to Cubendo - only send if touched
-        if (device.channelControls[fader].fader.mTouchedValue.getProcessValue(activeDevice) === 1) {
-          device.ccPortPair.output.sendMidi(activeDevice, [0xB0, cc, ccValue])
-        }
-        // Update display
-        device.lcdManager.setChannelText(activeDevice, 1, fader, displayName);
-        device.lcdManager.setChannelText(activeDevice, 0, fader, ccValue.toString());
-      }
-  }
-
-  for (var i = 0; i < device.numStrips; ++i) {
-    let name = LcdManager.centerString(
-      LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(midi_cc[i].title))
+  // Create per-channel bindings with custom host variables and handlers
+  for (let i = 0; i < device.numStrips; ++i) {
+    const ccConfig = midi_cc[i]
+    const displayName = LcdManager.centerString(
+      LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(ccConfig.title))
     )
-    makeMidiCCBinding(page, subPageMIDICC, name, midi_cc[i].cc, i)
+
+    // Create custom host variable for this channel
+    const hostVariable = page.mCustom.makeHostValueVariable(displayName)
+
+    // Create binding manually to attach custom handler
+    const valueBinding = page
+      .makeValueBinding(
+        device.channelControls[i].fader.mSurfaceValue,
+        hostVariable
+      )
+      .setValueTakeOverModeJump()
+
+    // Attach custom handler for MIDI output
+    valueBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, mapping: any, value: number) => {
+      const ccValue = Math.ceil(value * 127)
+      const pitchBendValue = Math.ceil(value * 16383)
+      const val1 = pitchBendValue % 128
+      const val2 = Math.floor(pitchBendValue / 128)
+
+      // Send back to icon fader
+      device.channelControls[i].fader.mSurfaceValue.setProcessValue(activeDevice, value)
+
+      // Send MIDI CC only if fader is touched
+      if (device.channelControls[i].fader.mTouchedValue.getProcessValue(activeDevice) === 1) {
+        device.ccPortPair.output.sendMidi(activeDevice, [0xb0, ccConfig.cc, ccValue])
+      }
+
+      // Update display
+      device.lcdManager.setChannelText(activeDevice, 1, i, displayName)
+      device.lcdManager.setChannelText(activeDevice, 0, i, ccValue.toString())
+    }
+
+    bindings.push(valueBinding)
   }
 
-  // Dummy bindings to clear out any from other subpages for unused surface controls
-  // NOTE: Only bind ONCE for a subPage. Do Not bind to dummy and then bind to a real control. That will not work.
-  for (var i = 0; i < device.numStrips; ++i) {
-    page.makeValueBinding(device.channelControls[i].buttons.mute.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
-    page.makeValueBinding(device.channelControls[i].buttons.select.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
-    page.makeValueBinding(device.channelControls[i].buttons.solo.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
-    page.makeValueBinding(device.channelControls[i].buttons.record.mSurfaceValue, dummy).setSubPage(subPageMIDICC);
+  // Create subpage using config (handles dummy bindings and structure)
+  const subPageMIDICC = creator.createSubPageBindings(customConfig, faderSubPageArea)
 
-    var knobSurfaceValue = device.channelControls[i].encoder.mEncoderValue;
-    var knobPushValue = device.channelControls[i].encoder.mPushValue;
+  // Set subpage for all custom bindings
+  bindings.forEach(binding => binding.setSubPage(subPageMIDICC))
 
-    page.makeValueBinding(knobSurfaceValue, dummy).setSubPage(subPageMIDICC);
-    page.makeValueBinding(knobPushValue, dummy).setSubPage(subPageMIDICC);
-  }
-
-  page.mOnActivate = (context: MR_ActiveDevice) => {
+  // Override activation handler completely for LCD initialization
+  // (replaces the one from BindingCreator to avoid closure issues)
+  subPageMIDICC.mOnActivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
     console.log('from script: Platform M+ page "Midi" activated')
 
-    // This fails on activate due to overwrite from faders! thankfully the valueBinding doesn't. Looks like the scribble strip updates when the faders are deactivated occur
-    // after the mOnActivate call thus wiping this out.
-    for (var i = 0; i < device.numStrips; ++i) {
-      let name = LcdManager.centerString(
+    // Initialize LCD displays
+    for (let i = 0; i < device.numStrips; ++i) {
+      const displayName = LcdManager.centerString(
         LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(midi_cc[i].title))
       )
-      device.lcdManager.setChannelText(context, 1, i, name);
-      device.lcdManager.setChannelText(context, 0, i, "?");
+      device.lcdManager.setChannelText(activeDevice, 1, i, displayName)
+      device.lcdManager.setChannelText(activeDevice, 0, i, '?')
     }
   }
-  page.makeActionBinding(device.master.buttons.subPageMIDICC.mSurfaceValue, subPageMIDICC.mAction.mActivate)
 }

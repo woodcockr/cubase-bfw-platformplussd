@@ -5,10 +5,15 @@ Install required node packages:
 `npm install`
 
 
+Architecture:
+--------------
+
+The binding system uses a config-driven approach via `BindingCreator` and declarative configs in `src/config/subpages/`.
+Unused surface elements are automatically bound to dummy values via `dummyBindings` in the config.
+This pattern is applied to all subpages including Selected Track (SendsQC, EQ, CueSends, PreFilter) and Channel Strip effects.
+
 TODO:
 -----
-- [] Each new sub Page needs to have the portions of the surface it doesn't use either unbound or bound to something useful for that page
-  - Use a dummy value binding like Control Room has been configured to do for any unused surface elements.
 - [] Ch strip: Would be helpful if status lights or sd buttons displayed whether the selected strip module was loaded, active or bypassed
 
 
