@@ -10,30 +10,38 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   var zoomSubPageArea = page.makeSubPageArea('Zoom')
 
   var subPageJogNudge = jogSubPageArea.makeSubPage('Nudge')
-  subPageJogNudge.mOnActivate = (activeDevice) => {
-    // console.log('Nudge activated')
+  subPageJogNudge.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Nudge mode indicator on LCD (position 55 - Indicator2Text)
     device.lcdManager.setIndicator2Text(activeDevice, 'N')
   }
 
   var subPageJogScrub = jogSubPageArea.makeSubPage('Scrub')
-  subPageJogScrub.mOnActivate = (activeDevice) => {
-    // console.log('Scrub activated')
+  subPageJogScrub.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Scrub mode indicator on LCD (position 55 - Indicator2Text)
     device.lcdManager.setIndicator2Text(activeDevice, 'S')
   }
 
   var subPageJogZoom = zoomSubPageArea.makeSubPage('Zoom')
-  // subPageJogZoom.mOnActivate = (activeDevice)  => {
-  //   // Need a way to manage the lack of ability to know this has turned off. Can the message be SENT to the Icon to esnure mode is correct?
-  //   // console.log('Zoom activated')
-  //   // device.lcdManager.setIndicator1Text(activeDevice, ' ')
-  // }
+  subPageJogZoom.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Zoom mode indicator on LCD (position 111 - Indicator1Text)
+    device.lcdManager.setIndicator1Text(activeDevice, 'Z')
+  }
+  subPageJogZoom.mOnDeactivate = (activeDevice: MR_ActiveDevice) => {
+    // When leaving Zoom mode, clear the Z indicator (unless Nav is taking over)
+    // Note: Nav's mOnActivate will immediately follow and set 'N', so this creates
+    // a momentary blank state that prevents stale 'Z' from persisting
+    device.lcdManager.setIndicator1Text(activeDevice, ' ')
+  }
 
   var subPageJobNav = zoomSubPageArea.makeSubPage('Nav')
-  // subPageJobNav.mOnActivate = (activeDevice) => {
-  //   // See Zoom comment
-  //   // console.log('Nav activated')
-  //   // device.lcdManager.setIndicator1Text(activeDevice, 'N')
-  // }
+  subPageJobNav.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Nav mode indicator on LCD (position 111 - Indicator1Text)
+    device.lcdManager.setIndicator1Text(activeDevice, 'N')
+  }
+  subPageJobNav.mOnDeactivate = (activeDevice: MR_ActiveDevice) => {
+    // When leaving Nav mode, clear the N indicator
+    device.lcdManager.setIndicator1Text(activeDevice, ' ')
+  }
 
   // Transport controls
   page.makeActionBinding(device.transport.buttons.prevChn.mSurfaceValue, deviceDriver.mAction.mPrevPage)

@@ -63,3 +63,12 @@ midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
 const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);
+
+// Initialize LCD indicators after all subpages are set up
+// This ensures the default indicators are set and will persist
+activationCallbacks.addCallback((context) => {
+  // Set default indicators: Zoom mode (Z) and Nudge mode (N)
+  // These will be tracked in LcdManager and restored after display updates
+  device.lcdManager.setIndicator1Text(context, 'Z');
+  device.lcdManager.setIndicator2Text(context, 'N');
+});

@@ -91,5 +91,22 @@ export function makeSubPages(
       device.lcdManager.setChannelText(activeDevice, 1, i, displayName)
       device.lcdManager.setChannelText(activeDevice, 0, i, '?')
     }
+
+    // Restore indicators after LCD updates
+    device.lcdManager.restoreCurrentIndicators(activeDevice)
+  }
+
+  // Add deactivation handler to preserve LCD state when exiting this subpage
+  // This prevents blank display when switching to other subpages
+  subPageMIDICC.mOnDeactivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+    console.log('from script: Platform M+ page "Midi" deactivated')
+
+    // Clear only the channel text rows (0 and 1) that were modified by this subpage
+    // This prepares for the next subpage to initialize its own display cleanly
+    // Note: Indicator1Text and Indicator2Text are preserved (status letters like N/S/Z)
+    for (let i = 0; i < device.numStrips; ++i) {
+      device.lcdManager.setChannelText(activeDevice, 1, i, '      ')  // 6 spaces
+      device.lcdManager.setChannelText(activeDevice, 0, i, '      ')  // 6 spaces
+    }
   }
 }

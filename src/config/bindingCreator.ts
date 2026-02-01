@@ -840,6 +840,10 @@ export class BindingCreator {
 
       if (config.activation?.lcdTextLine0) {
         this.device.lcdManager?.setTextLine(activeDevice, 0, config.activation.lcdTextLine0);
+
+        // Restore indicators after LCD updates to ensure they persist
+        // The setTextLine call above may have cleared the indicators, so restore them
+        this.device.lcdManager?.restoreCurrentIndicators(activeDevice);
       }
 
       // Send MIDI output if configured
