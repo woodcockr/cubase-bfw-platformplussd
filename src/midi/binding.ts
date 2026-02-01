@@ -21,6 +21,7 @@ export const createGlobalBooleanVariables = () => ({
   isFlipModeActive: new BooleanContextStateVariable(),
   displayChannelValueName: new BooleanContextStateVariable(),
   displayParameterTitle: new BooleanContextStateVariable(),
+  isMidiCcPageActive: new BooleanContextStateVariable(),
 });
 
 export type GlobalBooleanVariables = ReturnType<typeof createGlobalBooleanVariables>;
@@ -113,6 +114,9 @@ export function bindDeviceToMidi(
     const isLocalValueModeActive = new ContextStateVariable(false);
 
     const updateNameValueDisplay = (context: MR_ActiveDevice) => {
+      if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+        return;
+      }
       const row = +globalBooleanVariables.areDisplayRowsFlipped.get(context);
       const displayParameterTitle = globalBooleanVariables.displayParameterTitle.get(context)
 
@@ -136,6 +140,9 @@ export function bindDeviceToMidi(
     };
 
     channel.encoder.mEncoderValue.mOnDisplayValueChange = (context, value) => {
+      if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+        return;
+      }
       value =
         {
           // French
@@ -174,6 +181,10 @@ export function bindDeviceToMidi(
     };
 
     channel.encoder.mEncoderValue.mOnTitleChange = (context, title1, title2) => {
+      if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+        return;
+      }
+
       globalBooleanVariables.areKnobsBound.set(context, true);
       // Luckily, `mOnTitleChange` runs after `mOnDisplayValueChange`, so setting
       // `isLocalValueModeActive` to `false` here overwrites the `true` that `mOnDisplayValueChange`
@@ -299,6 +310,9 @@ export function bindDeviceToMidi(
   bindFader(ports, master.fader, 8);
 
   master.fader.mSurfaceValue.mOnTitleChange = (context: MR_ActiveDevice, objectTitle: string, valueTitle: string) => {
+    if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+      return;
+    }
     var title = objectTitle ? objectTitle + ":" + valueTitle : "No AI Parameter under mouse"
     currentMasterFaderParameterName.set(
       context,
@@ -315,6 +329,9 @@ export function bindDeviceToMidi(
   }
 
   master.fader.mSurfaceValue.mOnDisplayValueChange = (context: MR_ActiveDevice, value: string, units: string) => {
+    if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+      return;
+    }
     currentMasterFaderDisplayValue.set(
       context,
       value + ' ' + units
@@ -326,6 +343,9 @@ export function bindDeviceToMidi(
   }
 
   master.fader.mTouchedValue.mOnProcessValueChange = (context, touched, value2) => {
+    if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+      return;
+    }
     // value===-1 means touch released
     if (value2 == -1) {
       globalBooleanVariables.refreshDisplay.toggle(context);

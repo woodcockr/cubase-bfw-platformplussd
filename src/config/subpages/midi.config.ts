@@ -11,12 +11,12 @@ import { BindingConfig } from '../bindingConfig';
 export const MIDI_CONFIG: BindingConfig = {
   id: 'midiCC',
   name: 'MIDI CC',
-  description: 'MIDI CC control with per-channel custom handlers',
+  description: 'MIDI CC control - faders send CC, encoders select CC number',
   masterButton: 'subPageMIDICC',
 
   bindings: {
-    // Per-channel bindings - Note: custom handlers are applied in midi.ts
-    // since they require access to device-specific MIDI output
+    // Per-channel bindings for faders - custom handlers in midi.ts
+    // Encoders also handled in midi.ts for CC number selection
     perChannel: [
       {
         id: 'midiCCFader',
@@ -39,9 +39,7 @@ export const MIDI_CONFIG: BindingConfig = {
           'buttons.mute.mSurfaceValue',
           'buttons.select.mSurfaceValue',
           'buttons.solo.mSurfaceValue',
-          'buttons.record.mSurfaceValue',
-          'encoder.mEncoderValue',
-          'encoder.mPushValue'
+          'buttons.record.mSurfaceValue'
         ]
       }
     ]
