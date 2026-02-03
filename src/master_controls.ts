@@ -44,7 +44,7 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   }
 
   // Transport controls
-  page.makeActionBinding(device.transport.buttons.prevChn.mSurfaceValue, deviceDriver.mAction.mPrevPage)
+  page.makeActionBinding(device.transport.buttons.prevChn.mSurfaceValue, page.mHostAccess.mTrackSelection.mAction.mPrevTrack)
   page.makeActionBinding(device.transport.buttons.nextChn.mSurfaceValue, deviceDriver.mAction.mNextPage)
   page.makeCommandBinding(device.transport.buttons.prevBnk.mSurfaceValue, 'Transport', 'Locate Previous Marker')
   page.makeCommandBinding(device.transport.buttons.nextBnk.mSurfaceValue, 'Transport', 'Locate Next Marker')
@@ -91,17 +91,7 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   page.makeValueBinding(device.master.buttons.read.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
   page.makeValueBinding(device.master.buttons.write.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
 
-  // Mixer Button
-  page
-    .makeValueBinding(
-      device.master.buttons.mixer.mSurfaceValue,
-      page.mCustom.makeHostValueVariable("Display Name/Value")
-    )
-    .mOnValueChange = (context, mapping, value) => {
-    if (value) {
-      globalBooleanVariables.isValueDisplayModeActive.toggle(context);
-    }
-  };
+  // Mixer Button binding will be set up in main file to activate Shift page
 
   return page
 }

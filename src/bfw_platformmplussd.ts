@@ -27,6 +27,7 @@ import * as control_room from "./control_room"
 import * as midi from "./midi"
 import * as selected_track from "./selected_track"
 import * as channel_strip from "./channel_strip"
+import * as shift from "./shift"
 
 
 // create the device driver main object
@@ -55,11 +56,21 @@ var page = decoratePage(makePageWithDefaults('Main', device, deviceDriver, globa
 // Dummy variable for unused controls in subpages
 const dummy = page.mCustom.makeHostValueVariable("null");
 var faderSubPageArea = page.makeSubPageArea('MixerArea')
-mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
-selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
-channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
-control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
-midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const mixerSubPage = mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const selectedTrackSubPages = selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const channelStripSubPages = channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const controlRoomSubPage = control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const midiCCSubPage = midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const shiftSubPage = shift.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy, {
+  mixer: mixerSubPage,
+  selectedTrack: selectedTrackSubPages,
+  channelStrip: channelStripSubPages,
+  controlRoom: controlRoomSubPage,
+  midiCC: midiCCSubPage
+})
+
+// Bind the physical Mixer button to activate the Shift page
+page.makeActionBinding(device.master.buttons.mixer.mSurfaceValue, shiftSubPage.mAction.mActivate)
 const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);

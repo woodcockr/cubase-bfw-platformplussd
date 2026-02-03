@@ -91,6 +91,7 @@ export interface MasterControl {
     subPageTools: LedButton,
     subPageSaturator: LedButton,
     subPageLimiter: LedButton,
+    subPageShift: LedButton,
   }
 }
 
@@ -146,6 +147,7 @@ export function makeMasterControl(surface: DecoratedDeviceSurface, x: number, y:
       subPageTools: surface.makeLedButton(sd_button_x + 6, sd_button_y + 6, 3, 3),
       subPageSaturator: surface.makeLedButton(sd_button_x + 9, sd_button_y + 6, 3, 3),
       subPageLimiter: surface.makeLedButton(sd_button_x + 12, sd_button_y + 6, 3, 3),
+      subPageShift: surface.makeLedButton(sd_button_x + 9, sd_button_y, 3, 3),
     },
     fader: surface.makeTouchSensitiveFader(fader_x, fader_y, 3, 18),
   }

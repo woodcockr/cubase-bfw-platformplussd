@@ -13,7 +13,7 @@ import { LcdManager } from "./LcdManager";
 /** Declares some global context-dependent variables that (may) affect multiple devices */
 export const createGlobalBooleanVariables = () => ({
   areMotorsActive: new BooleanContextStateVariable(),
-  isValueDisplayModeActive: new BooleanContextStateVariable(),
+  isValueDisplayModeActive: new BooleanContextStateVariable(true),
   refreshDisplay: new BooleanContextStateVariable(), // Toggling this will refresh the display with TrackTitles etc)
   areDisplayRowsFlipped: new BooleanContextStateVariable(),
   areFadersBound: new BooleanContextStateVariable(), // Ugly workaround for not receiving mOnTitleChange events when switching pages to unbound Faders
@@ -371,6 +371,7 @@ export function bindDeviceToMidi(
   master.buttons.subPageLimiter.bindToNote(sd_ports, 9);
   master.buttons.subPageControlRoom.bindToNote(sd_ports, 10);
   master.buttons.subPageMIDICC.bindToNote(sd_ports, 11);
+  master.buttons.subPageShift.bindToNote(sd_ports, 12);
 
   // Transport Section
   const transport = device.transport;

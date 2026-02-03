@@ -41,4 +41,7 @@ export function makeSubPages(
   page.makeActionBinding(device.master.buttons.subPageTools.mSurfaceValue, subpages.tools.mAction.mActivate)
   page.makeActionBinding(device.master.buttons.subPageSaturator.mSurfaceValue, subpages.saturator.mAction.mActivate)
   page.makeActionBinding(device.master.buttons.subPageLimiter.mSurfaceValue, subpages.limiter.mAction.mActivate)
+
+  // Return array of subpages for shift page bindings
+  return [subpages.gate, subpages.compressor, subpages.tools, subpages.saturator, subpages.limiter];
 }

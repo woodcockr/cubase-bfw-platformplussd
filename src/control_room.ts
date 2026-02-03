@@ -38,5 +38,5 @@ export function makeSubPages(
   const creator = new BindingCreator(page, device, dummy, globalBooleanVariables);
 
   // Create subpage and all bindings from configuration
-  creator.createSubPageBindings(CONTROL_ROOM_CONFIG, faderSubPageArea);
+  return creator.createSubPageBindings(CONTROL_ROOM_CONFIG, faderSubPageArea);
 }

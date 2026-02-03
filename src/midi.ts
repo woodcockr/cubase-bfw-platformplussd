@@ -143,4 +143,6 @@ export function makeSubPages(
       device.lcdManager.setChannelText(activeDevice, 0, i, '      ')  // 6 spaces
     }
   }
+
+  return subPageMIDICC;
 }
