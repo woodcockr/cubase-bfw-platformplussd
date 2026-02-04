@@ -44,8 +44,9 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   }
 
   // Transport controls
-  page.makeCommandBinding(device.transport.buttons.prevChn.mSurfaceValue, 'Transport', 'Locate Selection Start')
-  page.makeCommandBinding(device.transport.buttons.nextChn.mSurfaceValue, 'Transport', 'Locate Selection End')
+  // TODO PreChn and nextChn could be other commands
+  page.makeCommandBinding(device.transport.buttons.prevChn.mSurfaceValue, 'Transport', 'Locate Previous Event')
+  page.makeCommandBinding(device.transport.buttons.nextChn.mSurfaceValue, 'Transport', 'Locate Next Event')
   page.makeCommandBinding(device.transport.buttons.prevBnk.mSurfaceValue, 'Transport', 'Locate Previous Marker')
   page.makeCommandBinding(device.transport.buttons.nextBnk.mSurfaceValue, 'Transport', 'Locate Next Marker')
   page.makeValueBinding(device.transport.buttons.forward.mSurfaceValue, page.mHostAccess.mTransport.mValue.mForward)
