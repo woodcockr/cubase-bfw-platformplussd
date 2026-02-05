@@ -105,9 +105,6 @@ export function makeSubPages(
       // }
     });
 
-
-
-
       // Helper function to format label with prefix (max 6 chars)
       function formatLabel(label: string): string {
         if (label.length <= 6) {
