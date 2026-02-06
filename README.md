@@ -19,6 +19,8 @@ See [DUKTAPE_COMPATIBILITY.md](DUKTAPE_COMPATIBILITY.md) for important compatibi
 
 See [BINDING_CONFIG_REFERENCE.md](BINDING_CONFIG_REFERENCE.md) for documentation on the binding configuration system.
 
+See [STREAMDECK_INTEGRATION.md](STREAMDECK_INTEGRATION.md) for documentation on integrating with Elgato Stream Deck using the MIDI plugin.
+
 TODO:
 -----
 - [] SD buttons show full track and value details

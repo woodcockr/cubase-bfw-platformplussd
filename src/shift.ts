@@ -58,6 +58,32 @@ export function makeSubPages(
   recordBinding.mOnValueChange = (context, mapping, value) => {
     if (value) {
       globalBooleanVariables.isValueDisplayModeActive.toggle(context);
+      
+      // Send display mode status to Stream Deck via sysex
+      // See STREAMDECK_INTEGRATION.md for Stream Deck button configuration
+      const isActive = globalBooleanVariables.isValueDisplayModeActive.get(context);
+      const displayText = isActive ? "Display: ON" : "Display: OFF";
+      
+      // Convert text to ASCII bytes for sysex message
+      const textBytes: number[] = [];
+      for (let i = 0; i < displayText.length; i++) {
+        textBytes.push(displayText.charCodeAt(i));
+      }
+      
+      // Send sysex message to Stream Deck
+      // Format: F0 7D 00 <ASCII text bytes> F7
+      // - F0: Sysex start
+      // - 7D: Manufacturer ID (educational/development use)
+      // - 00: Message type identifier
+      // - <text bytes>: ASCII text content
+      // - F7: Sysex end
+      device.sdPortPair.output.sendMidi(context, [
+        0xF0,  // Sysex start
+        0x7D,  // Manufacturer ID
+        0x00,  // Message type identifier
+        ...textBytes,  // ASCII text
+        0xF7   // Sysex end
+      ]);
     }
   };
 
