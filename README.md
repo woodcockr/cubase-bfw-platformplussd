@@ -12,6 +12,13 @@ The binding system uses a config-driven approach via `BindingCreator` and declar
 Unused surface elements are automatically bound to dummy values via `dummyBindings` in the config.
 This pattern is applied to all subpages including Selected Track (SendsQC, EQ, CueSends, PreFilter) and Channel Strip effects.
 
+Development:
+------------
+
+See [DUKTAPE_COMPATIBILITY.md](DUKTAPE_COMPATIBILITY.md) for important compatibility notes about Cubase's JavaScript engine (Duktape) and known workarounds for common issues.
+
+See [BINDING_CONFIG_REFERENCE.md](BINDING_CONFIG_REFERENCE.md) for documentation on the binding configuration system.
+
 TODO:
 -----
 - [] SD buttons show full track and value details

@@ -3,8 +3,9 @@
  *
  * Defines bindings for additional functionality with:
  * - Select buttons selecting specific pages (manually bound in shift.ts)
- * - Mute 1 button toggling value display mode (manually bound in shift.ts)
- * - All other controls have dummy bindings
+ * - Record 1 button toggling value display mode (manually bound in shift.ts)
+ * - Scribble strip titles display custom labels (managed in shift.ts mOnActivate)
+ * - All other controls have dummy bindings to clear them
  */
 
 import { BindingConfig } from '../bindingConfig';
@@ -16,8 +17,9 @@ export const SHIFT_PAGE_CONFIG: BindingConfig = {
   masterButton: 'subPageShift',
 
   bindings: {
-    // Dummy bindings to clear ALL controls on ALL channels
-    // Custom bindings for Select and Mute are handled manually in shift.ts
+    // Dummy bindings to clear unused controls on all channels
+    // Note: scribbleStrip.trackTitle is NOT included here because we manage it
+    // manually in shift.ts via mOnActivate to display custom label text
     dummyChannelRanges: [
       {
         range: {
@@ -25,7 +27,6 @@ export const SHIFT_PAGE_CONFIG: BindingConfig = {
           maxValue: 'device.numStrips'
         },
         bindings: [
-          'scribbleStrip.trackTitle',
           'fader.mSurfaceValue',
           'encoder.mEncoderValue',
           'encoder.mPushValue',

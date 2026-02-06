@@ -64,8 +64,7 @@ export function makeSubPages(
   // If subpage references are provided, set up the special bindings
   if (subpages) {
     // Bind Select buttons (1-5) to Mixer, Control Room, MIDI CC
-    // Set up LCD display when shift page is activated
-    subPage.mOnActivate = function (context) {
+    device.channelControls.forEach((channelControl, index) => {
       const labelData = [
         { page: subpages.mixer, label: 'Mixer' },
         { page: subpages.controlRoom, label: 'Ctl Rm' },
@@ -73,7 +72,6 @@ export function makeSubPages(
         { page: subpages.selectedTrack[0], label: 'SelChl' },
         { page: subpages.channelStrip[0], label: 'ChStrp' },
       ];
-    device.channelControls.forEach((channelControl, index) => {
       // Select buttons activate specific pages (cycling through first 3)
       if (index < labelData.length && labelData[index]) {
         const selectBinding = page
@@ -105,6 +103,21 @@ export function makeSubPages(
       // }
     });
 
+    // Custom mOnActivate handler that replicates BindingCreator behavior plus LCD setup
+    // NOTE: We inline the logic instead of calling the original handler to avoid Duktape
+    // compatibility issues. See DUKTAPE_COMPATIBILITY.md for details on why chaining
+    // function references causes "DukValue is uninitialized" errors in Cubase.
+    subPage.mOnActivate = (activeDevice: any, activeMapping: any) => {
+      // Log activation message (from SHIFT_PAGE_CONFIG)
+      console.log('from script: Platform M+ page "Shift Page" activated');
+
+      // Update global variables (from SHIFT_PAGE_CONFIG activation.globalVariables)
+      globalBooleanVariables.displayChannelValueName.set(activeDevice, false);
+      globalBooleanVariables.displayParameterTitle.set(activeDevice, true);
+      globalBooleanVariables.areKnobsBound.set(activeDevice, false);
+      globalBooleanVariables.areFadersBound.set(activeDevice, false);
+      globalBooleanVariables.refreshDisplay.toggle(activeDevice);
+
       // Helper function to format label with prefix (max 6 chars)
       function formatLabel(label: string): string {
         if (label.length <= 6) {
@@ -120,14 +133,22 @@ export function makeSubPages(
         return label.substring(0, 6);
       }
 
-      // Set LCD labels for each channel (row 0 and row 1)
+      // Set LCD labels for the Shift page
+      const labelData = [
+        { label: 'Mixer' },
+        { label: 'Ctl Rm' },
+        { label: 'MIDICC' },
+        { label: 'SelChl' },
+        { label: 'ChStrp' },
+      ];
+
       for (var i = 0; i < labelData.length; i++) {
         var data = labelData[i];
         var formattedLabel = formatLabel(data.label);
-        device.lcdManager.setChannelText(context, 1, i, formattedLabel);
-        device.lcdManager.setChannelText(context, 0, i, '');
+        device.lcdManager.setChannelText(activeDevice, 1, i, formattedLabel);
+        device.lcdManager.setChannelText(activeDevice, 0, i, '');
       }
-    }
+    };
   };
 
   // Note: The masterButton 'subPageShift' will automatically be bound to activate this subpage
