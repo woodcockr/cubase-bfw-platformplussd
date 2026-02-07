@@ -9,6 +9,7 @@ import {
 } from "./decorators/surface";
 import { LcdManager } from "./midi/LcdManager";
 import { makePortPair, PortPair } from "./midi/PortPair";
+import { DisplayStateManager } from "./midi/DisplayStateManager";
 
 
 // The ICon Platform M+ Device
@@ -23,6 +24,7 @@ export class IconPlatformMplus {
   sdPortPair: PortPair;
 
   lcdManager: LcdManager;
+  displayStateManager: DisplayStateManager;
 
   constructor(
     driver: MR_DeviceDriver,
@@ -53,6 +55,7 @@ export class IconPlatformMplus {
       .expectOutputNameEquals('Icon CC')
 
     this.lcdManager = new LcdManager(this);
+    this.displayStateManager = new DisplayStateManager(this.lcdManager);
   }
 }
 

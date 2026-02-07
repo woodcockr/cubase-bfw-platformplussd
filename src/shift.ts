@@ -58,18 +58,18 @@ export function makeSubPages(
   recordBinding.mOnValueChange = (context, mapping, value) => {
     if (value) {
       globalBooleanVariables.isValueDisplayModeActive.toggle(context);
-      
+
       // Send display mode status to Stream Deck via sysex
       // See STREAMDECK_INTEGRATION.md for Stream Deck button configuration
       const isActive = globalBooleanVariables.isValueDisplayModeActive.get(context);
       const displayText = isActive ? "Display: ON" : "Display: OFF";
-      
+
       // Convert text to ASCII bytes for sysex message
       const textBytes: number[] = [];
       for (let i = 0; i < displayText.length; i++) {
         textBytes.push(displayText.charCodeAt(i));
       }
-      
+
       // Send sysex message to Stream Deck
       // Format: F0 7D 00 <ASCII text bytes> F7
       // - F0: Sysex start
@@ -134,6 +134,14 @@ export function makeSubPages(
     // compatibility issues. See DUKTAPE_COMPATIBILITY.md for details on why chaining
     // function references causes "DukValue is uninitialized" errors in Cubase.
     subPage.mOnActivate = (activeDevice: any, activeMapping: any) => {
+      // Set current page ID in global state
+      const pageId = 'shift';
+      globalBooleanVariables.currentPageId.set(activeDevice, pageId);
+
+      // Initialize page in DisplayStateManager and set as active
+      device.displayStateManager.initializePage(pageId);
+      device.displayStateManager.setActivePage(activeDevice, pageId);
+
       // Log activation message (from SHIFT_PAGE_CONFIG)
       console.log('from script: Platform M+ page "Shift Page" activated');
 
@@ -143,6 +151,14 @@ export function makeSubPages(
       globalBooleanVariables.areKnobsBound.set(activeDevice, false);
       globalBooleanVariables.areFadersBound.set(activeDevice, false);
       globalBooleanVariables.refreshDisplay.toggle(activeDevice);
+
+      // Update page settings in DisplayStateManager
+      device.displayStateManager.updatePageSettings(activeDevice, pageId, {
+        displayChannelValueName: false,
+        displayParameterTitle: true,
+        areKnobsBound: false,
+        areFadersBound: false,
+      });
 
       // Helper function to format label with prefix (max 6 chars)
       function formatLabel(label: string): string {

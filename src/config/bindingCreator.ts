@@ -752,7 +752,7 @@ export class BindingCreator {
       return propertyPath;
     }
 
-    if (propertyPath.includes('(')) {
+    if (propertyPath.indexOf('(') !== -1) {
       const dynamicBase = { device: this.device, page: this.page, host: hostAccessor };
       const value = this.resolveHostValue(propertyPath, dynamicBase as any, undefined);
       return typeof value === 'number' ? value : 0;
@@ -819,10 +819,19 @@ export class BindingCreator {
     subPage: MR_SubPage
   ): void {
     subPage.mOnActivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+      // Set current page ID in global state
+      this.globalBooleanVariables.currentPageId.set(activeDevice, config.id);
+
+      // Initialize page in DisplayStateManager and set as active
+      this.device.displayStateManager.initializePage(config.id);
+      this.device.displayStateManager.setActivePage(activeDevice, config.id);
+
       if (config.activation?.logMessage) {
         console.log(config.activation.logMessage);
       }
 
+      // Update page settings in DisplayStateManager
+      const pageSettings: any = {};
       for (const varConfig of config.activation?.globalVariables || []) {
         const variable = (this.globalBooleanVariables as any)[varConfig.name];
         if (variable) {
@@ -830,12 +839,25 @@ export class BindingCreator {
             variable.toggle(activeDevice);
           } else if (varConfig.value !== undefined) {
             variable.set(activeDevice, varConfig.value);
+
+            // Track settings that affect display
+            if (
+              ['displayChannelValueName', 'displayParameterTitle', 'areFadersBound', 'areKnobsBound', 'areDisplayRowsFlipped', 'isValueDisplayModeActive']
+                .indexOf(varConfig.name) !== -1
+            ) {
+              pageSettings[varConfig.name] = varConfig.value;
+            }
           }
         } else {
           console.log(
             `Warning: Global variable "${varConfig.name}" not found in globalBooleanVariables`
           );
         }
+      }
+
+      // Apply page settings to DisplayStateManager
+      if (Object.keys(pageSettings).length > 0) {
+        this.device.displayStateManager.updatePageSettings(activeDevice, config.id, pageSettings);
       }
 
       if (config.activation?.lcdTextLine0) {

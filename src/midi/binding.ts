@@ -9,6 +9,7 @@ import {
 import { PortPair } from "./PortPair";
 import { ActivationCallbacks } from "./connection";
 import { LcdManager } from "./LcdManager";
+import { DisplayStateManager } from "./DisplayStateManager";
 
 /** Declares some global context-dependent variables that (may) affect multiple devices */
 export const createGlobalBooleanVariables = () => ({
@@ -22,6 +23,7 @@ export const createGlobalBooleanVariables = () => ({
   displayChannelValueName: new BooleanContextStateVariable(),
   displayParameterTitle: new BooleanContextStateVariable(),
   isMidiCcPageActive: new BooleanContextStateVariable(),
+  currentPageId: new ContextStateVariable('unknown'), // Track current active page
 });
 
 export type GlobalBooleanVariables = ReturnType<typeof createGlobalBooleanVariables>;
@@ -93,6 +95,8 @@ export function bindDeviceToMidi(
         sendValue(context, lastFaderValue.get(context));
       }
     });
+
+    return fader;
   }
 
   for (const [channelIndex, channel] of device.channelControls.entries()) {
@@ -105,44 +109,13 @@ export function bindDeviceToMidi(
       .setInputPort(ports.input)
       .bindToNote(0, 32 + channelIndex);
 
-    // Scribble Strip
-    const currentParameterTitle = new ContextStateVariable("");
-    const currentParameterName = new ContextStateVariable("");
-    const currentDisplayValue = new ContextStateVariable("");
-    const currentChannelName = new ContextStateVariable("");
-    const currentChannelValueName = new ContextStateVariable("");
-    const isLocalValueModeActive = new ContextStateVariable(false);
-
-    const updateNameValueDisplay = (context: MR_ActiveDevice) => {
-      if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
-        return;
-      }
-      const row = +globalBooleanVariables.areDisplayRowsFlipped.get(context);
-      const displayParameterTitle = globalBooleanVariables.displayParameterTitle.get(context)
-
-      if (globalBooleanVariables.areKnobsBound.get(context)) {
-        let name = currentParameterName.get(context)
-        if (displayParameterTitle) {
-          name = currentParameterTitle.get(context)
-        }
-        device.lcdManager.setChannelText(
-          context,
-          row,
-          channelIndex,
-          isLocalValueModeActive.get(context) ||
-            globalBooleanVariables.isValueDisplayModeActive.get(context)
-            ? currentDisplayValue.get(context)
-            : name
-        );
-      } else {
-        device.lcdManager.setChannelText(context, row, channelIndex, "");
-      }
-    };
-
+    // Encoder callbacks - use DisplayStateManager
     channel.encoder.mEncoderValue.mOnDisplayValueChange = (context, value) => {
       if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
         return;
       }
+
+      // Translate localized strings to English
       value =
         {
           // French
@@ -161,20 +134,16 @@ export function bindDeviceToMidi(
           关: "Off",
         }[value] ?? value;
 
-      currentDisplayValue.set(
-        context,
-        LcdManager.centerString(
-          LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(value))
-        )
-      );
-      isLocalValueModeActive.set(context, true);
-      updateNameValueDisplay(context);
+      const pageId = globalBooleanVariables.currentPageId.get(context);
+      device.displayStateManager.updateEncoderValue(context, pageId, channelIndex, value);
+
+      // Clear local value mode after 1 second
       setTimeout(
         context,
-        `updateDisplay${channelIndex}`,
+        `clearLocalValueMode${channelIndex}`,
         (context) => {
-          isLocalValueModeActive.set(context, false);
-          updateNameValueDisplay(context);
+          const pageId = globalBooleanVariables.currentPageId.get(context);
+          device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
         },
         1
       );
@@ -185,17 +154,7 @@ export function bindDeviceToMidi(
         return;
       }
 
-      globalBooleanVariables.areKnobsBound.set(context, true);
-      // Luckily, `mOnTitleChange` runs after `mOnDisplayValueChange`, so setting
-      // `isLocalValueModeActive` to `false` here overwrites the `true` that `mOnDisplayValueChange`
-      // sets
-      isLocalValueModeActive.set(context, false);
-      currentParameterTitle.set(
-        context,
-        LcdManager.centerString(
-          LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(title1))
-        )
-      );
+      // Translate localized strings for title2
       title2 =
         {
           // English
@@ -238,48 +197,15 @@ export function bindDeviceToMidi(
           "前置/后置": "PrePost",
         }[title2] ?? title2;
 
-      currentParameterName.set(
-        context,
-        LcdManager.centerString(
-          LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(title2))
-        )
-      );
-      updateNameValueDisplay(context);
+      const pageId = globalBooleanVariables.currentPageId.get(context);
+      device.displayStateManager.updateEncoderTitle(context, pageId, channelIndex, title1, title2);
     };
 
-    globalBooleanVariables.isValueDisplayModeActive.addOnChangeCallback(updateNameValueDisplay);
-    globalBooleanVariables.areDisplayRowsFlipped.addOnChangeCallback(updateNameValueDisplay);
-    globalBooleanVariables.refreshDisplay.addOnChangeCallback(updateNameValueDisplay);
-
-    const updateTrackTitleDisplay = (context: MR_ActiveDevice) => {
-      const row = 1 - +globalBooleanVariables.areDisplayRowsFlipped.get(context);
-      const displayChannelValueName = globalBooleanVariables.displayChannelValueName.get(context)
-      if (globalBooleanVariables.areFadersBound.get(context)) {
-        let name = currentChannelName.get(context)
-        if (displayChannelValueName) {
-          name = currentChannelValueName.get(context)
-        }
-        device.lcdManager.setChannelText(context, row, channelIndex, name);
-      } else {
-        device.lcdManager.setChannelText(context, row, channelIndex, "");
-      }
-    };
-
+    // Scribble Strip - Track Title
     channel.scribbleStrip.trackTitle.mOnTitleChange = (context, title, valueTitle) => {
-      globalBooleanVariables.areFadersBound.set(context, true);
-      currentChannelName.set(
-        context,
-        LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(title))
-      );
-      currentChannelValueName.set(
-        context,
-        LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(valueTitle))
-      );
-      updateTrackTitleDisplay(context);
+      device.displayStateManager.updateTrackTitle(context, channelIndex, title, valueTitle);
+      console.log(`scribbleStrip.trackTitle.mOnTitleChange updated for channel ${title}:${valueTitle}`);
     };
-
-    globalBooleanVariables.areDisplayRowsFlipped.addOnChangeCallback(updateTrackTitleDisplay);
-    globalBooleanVariables.refreshDisplay.addOnChangeCallback(updateTrackTitleDisplay);
 
     // Channel Buttons
     const buttons = channel.buttons;
@@ -293,19 +219,58 @@ export function bindDeviceToMidi(
     }
 
     // Fader
-    bindFader(ports, channel.fader, channelIndex);
+    const channelFader = bindFader(ports, channel.fader, channelIndex);
+
+    // Fader display value callback
+    channelFader.mSurfaceValue.mOnDisplayValueChange = (context, value, units) => {
+      if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
+        return;
+      }
+      const displayValue = units ? `${value} ${units}` : value;
+      const pageId = globalBooleanVariables.currentPageId.get(context);
+      device.displayStateManager.updateFaderValue(context, pageId, channelIndex, displayValue);
+    };
   }
+
+  // Add global callbacks for display setting changes
+  globalBooleanVariables.isValueDisplayModeActive.addOnChangeCallback((context, value) => {
+    const pageId = globalBooleanVariables.currentPageId.get(context);
+    device.displayStateManager.updatePageSettings(context, pageId, {
+      isValueDisplayModeActive: value,
+    });
+  });
+
+  globalBooleanVariables.areDisplayRowsFlipped.addOnChangeCallback((context, value) => {
+    const pageId = globalBooleanVariables.currentPageId.get(context);
+    device.displayStateManager.updatePageSettings(context, pageId, {
+      areDisplayRowsFlipped: value,
+    });
+  });
+
+  globalBooleanVariables.displayChannelValueName.addOnChangeCallback((context, value) => {
+    const pageId = globalBooleanVariables.currentPageId.get(context);
+    device.displayStateManager.updatePageSettings(context, pageId, {
+      displayChannelValueName: value,
+    });
+  });
+
+  globalBooleanVariables.displayParameterTitle.addOnChangeCallback((context, value) => {
+    const pageId = globalBooleanVariables.currentPageId.get(context);
+    device.displayStateManager.updatePageSettings(context, pageId, {
+      displayParameterTitle: value,
+    });
+  });
+
+  globalBooleanVariables.refreshDisplay.addOnChangeCallback((context) => {
+    device.displayStateManager.refreshAllChannels(context);
+  });
 
   // Master Section
   const master = device.master
 
   activationCallbacks.addCallback((context) => {
-    device.lcdManager.setIndicator2Text(context, 'N')
+    device.displayStateManager.updateIndicator2(context, 'N');
   });
-
-
-  const currentMasterFaderParameterName = new ContextStateVariable("");
-  const currentMasterFaderDisplayValue = new ContextStateVariable("");
 
   bindFader(ports, master.fader, 8);
 
@@ -313,45 +278,31 @@ export function bindDeviceToMidi(
     if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
       return;
     }
-    var title = objectTitle ? objectTitle + ":" + valueTitle : "No AI Parameter under mouse"
-    currentMasterFaderParameterName.set(
-      context,
-      title
-    );
-    currentMasterFaderDisplayValue.set(
-      context,
-      ' '
-    );
-    if (master.fader.mTouchedValue.getProcessValue(context) === 1) {
-      device.lcdManager.setTextLine(context, 1, currentMasterFaderParameterName.get(context))
-      device.lcdManager.setTextLine(context, 0, currentMasterFaderDisplayValue.get(context))
-    }
+    const title = objectTitle ? objectTitle + ":" + valueTitle : "No AI Parameter under mouse";
+    device.displayStateManager.updateMasterFader(context, {
+      parameterName: title,
+    });
   }
 
   master.fader.mSurfaceValue.mOnDisplayValueChange = (context: MR_ActiveDevice, value: string, units: string) => {
     if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
       return;
     }
-    currentMasterFaderDisplayValue.set(
-      context,
-      value + ' ' + units
-    );
-    if (master.fader.mTouchedValue.getProcessValue(context) === 1) {
-      device.lcdManager.setTextLine(context, 1, currentMasterFaderParameterName.get(context))
-      device.lcdManager.setTextLine(context, 0, currentMasterFaderDisplayValue.get(context))
-    }
+    device.displayStateManager.updateMasterFader(context, {
+      displayValue: value + ' ' + units,
+    });
   }
 
   master.fader.mTouchedValue.mOnProcessValueChange = (context, touched, value2) => {
     if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
       return;
     }
-    // value===-1 means touch released
+    // value2===-1 means touch released
     if (value2 == -1) {
+      device.displayStateManager.updateMasterFader(context, { isTouched: false });
       globalBooleanVariables.refreshDisplay.toggle(context);
     } else {
-      device.lcdManager.setTextLine(context, 1, currentMasterFaderParameterName.get(context))
-      device.lcdManager.setTextLine(context, 0, currentMasterFaderDisplayValue.get(context))
+      device.displayStateManager.updateMasterFader(context, { isTouched: true });
     }
   }
 

@@ -114,6 +114,14 @@ export function makeSubPages(
 
   // Override activation handler for LCD initialization
   subPageMIDICC.mOnActivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+    // Set current page ID in global state
+    const pageId = 'midicc';
+    globalBooleanVariables.currentPageId.set(activeDevice, pageId);
+
+    // Initialize page in DisplayStateManager and set as active
+    device.displayStateManager.initializePage(pageId);
+    device.displayStateManager.setActivePage(activeDevice, pageId);
+
     console.log('from script: Platform M+ page "Midi" activated')
 
     globalBooleanVariables.isMidiCcPageActive.set(activeDevice, true);
