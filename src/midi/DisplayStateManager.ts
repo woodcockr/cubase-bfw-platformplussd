@@ -160,6 +160,80 @@ export class DisplayStateManager {
     return this.pageStates.get(this.activePageId) || null;
   }
 
+  private ensureChannelData(state: PageDisplayState, channelIndex: number): ChannelDisplayData {
+    if (!state.channels.has(channelIndex)) {
+      state.channels.set(channelIndex, {
+        encoder: { title1: '', title2: '', displayValue: '' },
+        fader: { title: '', valueTitle: '', displayValue: '' },
+      });
+    }
+
+    return state.channels.get(channelIndex)!;
+  }
+
+  private shouldRefreshPage(pageId: string): boolean {
+    return pageId === this.activePageId && !this.isActivatingPage;
+  }
+
+  private getRowForControl(state: PageDisplayState, control: 'encoder' | 'fader'): 0 | 1 {
+    if (control === 'encoder') {
+      return (state.areDisplayRowsFlipped ? 1 : 0) as 0 | 1;
+    }
+
+    return (state.areDisplayRowsFlipped ? 0 : 1) as 0 | 1;
+  }
+
+  private refreshControlDisplay(
+    context: MR_ActiveDevice,
+    channelIndex: number,
+    control: 'encoder' | 'fader'
+  ): void {
+    const state = this.getActivePageState();
+    if (!state) return;
+
+    const channelData = state.channels.get(channelIndex);
+    if (!channelData) return;
+
+    const isBound = control === 'encoder' ? state.areKnobsBound : state.areFadersBound;
+    if (!isBound) return;
+
+    const row = this.getRowForControl(state, control);
+    const isLocalValueMode = state.localValueModeActive.get(channelIndex) || false;
+    const isGlobalValueMode = state.isValueDisplayModeActive;
+    let displayText = '';
+
+    if (isLocalValueMode || isGlobalValueMode) {
+      displayText = this.abbreviateAndCenter(
+        control === 'encoder'
+          ? channelData.encoder.displayValue
+          : channelData.fader.displayValue
+      );
+    } else if (state.displayLineConfiguration) {
+      displayText = this.getDisplayTextForLine(
+        context,
+        control === 'encoder' ? 0 : 1,
+        channelData,
+        state.displayLineConfiguration,
+        this.displayLineToggleActive
+      );
+    } else if (control === 'encoder') {
+      const parameterText = state.displayParameterTitle
+        ? channelData.encoder.title1
+        : channelData.encoder.title2;
+      displayText = this.abbreviateAndCenter(parameterText);
+    } else {
+      displayText = state.displayChannelValueName
+        ? this.abbreviateAndCenter(channelData.fader.valueTitle)
+        : this.abbreviateAndCenter(channelData.fader.title);
+    }
+
+    console.log(
+      `Displaying ${control} value for channel ${channelIndex}: "${displayText}" (local: ${isLocalValueMode}, global: ${isGlobalValueMode})`
+    );
+
+    this.lcdManager.setChannelText(context, row, channelIndex, displayText);
+  }
+
   /**
    * Set the display line toggle state and refresh if active page exists
    */
@@ -193,20 +267,13 @@ export class DisplayStateManager {
     this.initializePage(pageId);
     const state = this.pageStates.get(pageId)!;
 
-    if (!state.channels.has(channelIndex)) {
-      state.channels.set(channelIndex, {
-        encoder: { title1: '', title2: '', displayValue: '' },
-        fader: { title: '', valueTitle: '', displayValue: '' },
-      });
-    }
-
-    const channelData = state.channels.get(channelIndex)!;
+    const channelData = this.ensureChannelData(state, channelIndex);
     channelData.encoder.title1 = title1;
     channelData.encoder.title2 = title2;
 
     // Refresh the display for this channel (unless we're still activating)
-    if (pageId === this.activePageId && !this.isActivatingPage) {
-      this.refreshEncoderDisplay(context, channelIndex);
+    if (this.shouldRefreshPage(pageId)) {
+      this.refreshControlDisplay(context, channelIndex, 'encoder');
     }
   }
 
@@ -221,22 +288,15 @@ export class DisplayStateManager {
   ): void {
     const state = this.pageStates.get(pageId)!;
 
-    if (!state.channels.has(channelIndex)) {
-      state.channels.set(channelIndex, {
-        encoder: { title1: '', title2: '', displayValue: '' },
-        fader: { title: '', valueTitle: '', displayValue: '' },
-      });
-    }
-
-    const channelData = state.channels.get(channelIndex)!;
+    const channelData = this.ensureChannelData(state, channelIndex);
     channelData.encoder.displayValue = displayValue;
 
     // Temporarily activate local value mode for this channel
     state.localValueModeActive.set(channelIndex, true);
 
     // Refresh the display for this channel (unless we're still activating)
-    if (pageId === this.activePageId && !this.isActivatingPage) {
-      this.refreshEncoderDisplay(context, channelIndex);
+    if (this.shouldRefreshPage(pageId)) {
+      this.refreshControlDisplay(context, channelIndex, 'encoder');
     }
   }
 
@@ -249,9 +309,9 @@ export class DisplayStateManager {
       state.localValueModeActive.set(channelIndex, false);
 
       // Refresh the display for this channel (unless we're still activating)
-      if (pageId === this.activePageId && !this.isActivatingPage) {
-        this.refreshEncoderDisplay(context, channelIndex);
-        this.refreshFaderDisplay(context, channelIndex);
+      if (this.shouldRefreshPage(pageId)) {
+        this.refreshControlDisplay(context, channelIndex, 'encoder');
+        this.refreshControlDisplay(context, channelIndex, 'fader');
       }
     }
   }
@@ -267,22 +327,15 @@ export class DisplayStateManager {
   ): void {
     const state = this.pageStates.get(pageId)!;
 
-    if (!state.channels.has(channelIndex)) {
-      state.channels.set(channelIndex, {
-        encoder: { title1: '', title2: '', displayValue: '' },
-        fader: { title: '', valueTitle: '', displayValue: '' },
-      });
-    }
-
-    const channelData = state.channels.get(channelIndex)!;
+    const channelData = this.ensureChannelData(state, channelIndex);
     channelData.fader.displayValue = displayValue;
 
     // Temporarily activate local value mode for this channel
     state.localValueModeActive.set(channelIndex, true);
 
     // Refresh the display for this channel (unless we're still activating)
-    if (pageId === this.activePageId && !this.isActivatingPage) {
-      this.refreshFaderDisplay(context, channelIndex);
+    if (this.shouldRefreshPage(pageId)) {
+      this.refreshControlDisplay(context, channelIndex, 'fader');
     }
   }
 
@@ -304,20 +357,13 @@ export class DisplayStateManager {
 
     console.log(`Updating track title for ACTIVE page ${this.activePageId} channel ${channelIndex}: "${title}" / "${valueTitle}"`);
 
-    if (!state.channels.has(channelIndex)) {
-      state.channels.set(channelIndex, {
-        encoder: { title1: '', title2: '', displayValue: '' },
-        fader: { title, valueTitle, displayValue: '' },
-      });
-    } else {
-      const channelData = state.channels.get(channelIndex)!;
-      channelData.fader.title = title;
-      channelData.fader.valueTitle = valueTitle;
-    }
+    const channelData = this.ensureChannelData(state, channelIndex);
+    channelData.fader.title = title;
+    channelData.fader.valueTitle = valueTitle;
 
     // Refresh the display for this channel (unless we're still activating)
     if (!this.isActivatingPage) {
-      this.refreshFaderDisplay(context, channelIndex);
+      this.refreshControlDisplay(context, channelIndex, 'fader');
     }
   }
 
@@ -376,91 +422,15 @@ export class DisplayStateManager {
    * Refresh encoder display for a specific channel
    */
   private refreshEncoderDisplay(context: MR_ActiveDevice, channelIndex: number): void {
-    const state = this.getActivePageState();
-    if (!state) return;
-
-    const channelData = state.channels.get(channelIndex);
-    if (!channelData) return;
-
-    const row = +state.areDisplayRowsFlipped ? 1 : 0;
-
-    // Determine what to display
-    let displayText = '';
-
-    if (state.areKnobsBound) {
-      const isLocalValueMode = state.localValueModeActive.get(channelIndex) || false;
-      const isGlobalValueMode = state.isValueDisplayModeActive;
-      if (isLocalValueMode || isGlobalValueMode) {
-        // Show value
-        displayText = this.abbreviateAndCenter(channelData.encoder.displayValue);
-      } else {
-        // If page has display line configuration, use it
-        if (state.displayLineConfiguration) {
-          displayText = this.getDisplayTextForLine(
-            context,
-            0 as const,
-            channelData,
-            state.displayLineConfiguration,
-            this.displayLineToggleActive
-          );
-        } else {
-          // Fall back to legacy logic
-          // Show parameter name or title
-          const parameterText = state.displayParameterTitle
-            ? channelData.encoder.title1
-            : channelData.encoder.title2;
-          displayText = this.abbreviateAndCenter(parameterText);
-        }
-      }
-      console.log(`Displaying encoder value for channel ${channelIndex}: "${displayText}" (local: ${isLocalValueMode}, global: ${isGlobalValueMode})`);
-
-      this.lcdManager.setChannelText(context, row, channelIndex, displayText);
-    }
+    this.refreshControlDisplay(context, channelIndex, 'encoder');
   }
 
   /**
    * Refresh fader display for a specific channel
    */
   private refreshFaderDisplay(context: MR_ActiveDevice, channelIndex: number): void {
-    const state = this.getActivePageState();
-    if (!state) return;
-
-    const channelData = state.channels.get(channelIndex);
-    if (!channelData) return;
-
-    const row = state.areDisplayRowsFlipped ? 0 : 1;
-
-    // Determine what to display
-    let displayText = '';
-
-    if (state.areFadersBound) {
-      const isLocalValueMode = state.localValueModeActive.get(channelIndex) || false;
-      const isGlobalValueMode = state.isValueDisplayModeActive;
-      // If page has display line configuration, use it
-      if (isLocalValueMode || isGlobalValueMode) {
-        // Show value
-        displayText = this.abbreviateAndCenter(channelData.fader.displayValue);
-      } else {
-        if (state.displayLineConfiguration) {
-            displayText = this.getDisplayTextForLine(
-              context,
-              1 as const,
-              channelData,
-              state.displayLineConfiguration,
-              this.displayLineToggleActive
-            );
-        } else {
-          // Fall back to legacy logic using page-specific channel data
-          displayText = state.displayChannelValueName
-            ? this.abbreviateAndCenter(channelData.fader.valueTitle)
-            : this.abbreviateAndCenter(channelData.fader.title);
-        }
-    }
-    console.log(`Displaying fader value for channel ${channelIndex}: "${displayText}" (local: ${isLocalValueMode}, global: ${isGlobalValueMode})`);
-
-    this.lcdManager.setChannelText(context, row, channelIndex, displayText);
+    this.refreshControlDisplay(context, channelIndex, 'fader');
   }
-}
 
   /**
    * Refresh display for all channels
