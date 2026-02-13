@@ -44,9 +44,12 @@ export const SHIFT_PAGE_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: false },
       { name: 'displayParameterTitle', value: true },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
+  },
+
+  displayBindings: {
+    knobsBound: false,
+    fadersBound: false
   }
 };

@@ -91,9 +91,20 @@ export const MIXER_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: false },
       { name: 'displayParameterTitle', value: false },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: true
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'trackName',
+    line1Toggle: 'faderValue',
+    toggleable: true
   }
 };

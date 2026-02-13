@@ -58,11 +58,50 @@ interface PageDisplayState {
   areDisplayRowsFlipped: boolean;
   isValueDisplayModeActive: boolean;
 
+  // Display line configuration for per-page display layout
+  displayLineConfiguration?: DisplayLineConfiguration;
+
   // Per-channel data for this page
   channels: Map<number, ChannelDisplayData>;
 
   // Local display modes per channel (e.g., temporary value display)
   localValueModeActive: Map<number, boolean>;
+}
+
+// Note: areFadersBound/areKnobsBound are set from per-page config (displayBindings)
+// and are no longer driven by host callbacks.
+// displayLineConfiguration defines what content shows on each display line (configurable per page).
+```
+
+##### DisplayLineConfiguration
+```typescript
+type LineDisplayMode = 'trackName' | 'faderValue' | 'encoderValue' | 'parameterName' | 'none';
+
+interface DisplayLineConfiguration {
+  /**
+   * Default line 0 (encoder row) display mode when display toggle is off
+   */
+  line0Default: LineDisplayMode;
+
+  /**
+   * What line 0 should show when display toggle is on (if different from default)
+   */
+  line0Toggle?: LineDisplayMode;
+
+  /**
+   * Default line 1 (fader row) display mode when display toggle is off
+   */
+  line1Default: LineDisplayMode;
+
+  /**
+   * What line 1 should show when display toggle is on (if different from default)
+   */
+  line1Toggle?: LineDisplayMode;
+
+  /**
+   * Whether this page supports toggling display modes
+   */
+  toggleable: boolean;
 }
 ```
 
@@ -216,8 +255,8 @@ The following state is **per-page** and changes when pages switch:
    - `areDisplayRowsFlipped` - Swap encoder/fader rows
 
 3. **Binding Status** - Store in `pageState`
-   - `areFadersBound` - Whether faders have active bindings
-   - `areKnobsBound` - Whether encoders have active bindings
+  - `areFadersBound` - Whether the page is configured to show fader data (from `displayBindings`)
+  - `areKnobsBound` - Whether the page is configured to show encoder data (from `displayBindings`)
 
 ## Display Update Flow
 
@@ -351,6 +390,58 @@ globalBooleanVariables.refreshDisplay.addOnChangeCallback((context) => {
 });
 ```
 
+## Display Line Toggle Feature
+
+**New in this version**: Configurable display lines with Stream Deck button support
+
+### Overview
+
+The display line toggle allows defining different display configurations for each page, with optional runtime switching via Stream Deck button.
+
+### Page Configuration
+
+Each page defines its display layout via `displayLineConfiguration`:
+
+```typescript
+// Mixer page example
+displayLineConfiguration: {
+  line0Default: 'trackName',      // Line 0 normally shows track names
+  line0Toggle: 'faderValue',      // Line 0 shows fader values when toggled
+  line1Default: 'parameterName',  // Line 1 always shows parameter names
+  toggleable: true                // This page supports toggling
+}
+```
+
+### Supported Line Display Modes
+
+- `'trackName'` - Display track names
+- `'faderValue'` - Display fader values (from mOnDisplayValueChange)
+- `'encoderValue'` - Display encoder values (from mOnDisplayValueChange)
+- `'parameterName'` - Display encoder parameter names
+- `'none'` - Don't display anything
+
+### Stream Deck Integration
+
+When a Stream Deck Display Line Toggle button is configured (sends CC 127 on channel 2), the MIDI Remote:
+
+1. Toggles the display line state
+2. Refreshes all displays with the new configuration
+3. Sends confirmation status back to Stream Deck
+
+See [STREAMDECK_INTEGRATION.md](STREAMDECK_INTEGRATION.md) for setup instructions.
+
+### Global Display Line Toggle State
+
+The `DisplayStateManager` maintains `displayLineToggleActive` state:
+
+```typescript
+// From user code
+const isToggled = device.displayStateManager.getDisplayLineToggle();
+device.displayStateManager.setDisplayLineToggle(context, !isToggled);
+```
+
+When the toggle state changes, `refreshAllChannels()` is automatically called to update all displays.
+
 ## Future Enhancements
 
 Potential improvements to the state management system:
@@ -361,6 +452,7 @@ Potential improvements to the state management system:
 4. **State Inspection** - Tools to view current state
 5. **Animation Support** - Smooth transitions between states
 6. **Validation** - Ensure state consistency and catch errors
+7. **Multiple Toggle Buttons** - Support different display toggle configurations per page
 
 ## Troubleshooting
 
@@ -375,8 +467,15 @@ Potential improvements to the state management system:
 
 1. Check if correct page ID is being used
 2. Verify global vs. per-page state separation
-3. Ensure display settings match expectations
+3. Ensure display settings match expectations (including `displayLineConfiguration`)
 4. Check abbreviation logic isn't truncating incorrectly
+
+### Display Line Toggle Not Working
+
+1. Verify Stream Deck is sending CC 127 on channel 2
+2. Check `displayLineConfiguration.toggleable` is true for the page
+3. Ensure both `line0Toggle` and `line1Toggle` are defined if you want to change both lines
+4. Confirm `setDisplayLineToggle()` is being called from the binding
 
 ### Indicators Disappearing
 

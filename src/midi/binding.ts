@@ -14,16 +14,15 @@ import { DisplayStateManager } from "./DisplayStateManager";
 /** Declares some global context-dependent variables that (may) affect multiple devices */
 export const createGlobalBooleanVariables = () => ({
   areMotorsActive: new BooleanContextStateVariable(),
-  isValueDisplayModeActive: new BooleanContextStateVariable(true),
+  isValueDisplayModeActive: new BooleanContextStateVariable(false),
   refreshDisplay: new BooleanContextStateVariable(), // Toggling this will refresh the display with TrackTitles etc)
   areDisplayRowsFlipped: new BooleanContextStateVariable(),
-  areFadersBound: new BooleanContextStateVariable(), // Ugly workaround for not receiving mOnTitleChange events when switching pages to unbound Faders
-  areKnobsBound: new BooleanContextStateVariable(), // Ugly workaround for not receiving mOnTitleChange events when switching pages to unbound Knobs
   isFlipModeActive: new BooleanContextStateVariable(),
   displayChannelValueName: new BooleanContextStateVariable(),
   displayParameterTitle: new BooleanContextStateVariable(),
   isMidiCcPageActive: new BooleanContextStateVariable(),
   currentPageId: new ContextStateVariable('unknown'), // Track current active page
+  displayLineToggleActive: new BooleanContextStateVariable(false), // Toggle for alternate display line modes
 });
 
 export type GlobalBooleanVariables = ReturnType<typeof createGlobalBooleanVariables>;
@@ -203,8 +202,8 @@ export function bindDeviceToMidi(
 
     // Scribble Strip - Track Title
     channel.scribbleStrip.trackTitle.mOnTitleChange = (context, title, valueTitle) => {
-      device.displayStateManager.updateTrackTitle(context, channelIndex, title, valueTitle);
       console.log(`scribbleStrip.trackTitle.mOnTitleChange updated for channel ${title}:${valueTitle}`);
+      device.displayStateManager.updateTrackTitle(context, channelIndex, title, valueTitle);
     };
 
     // Channel Buttons
@@ -262,7 +261,10 @@ export function bindDeviceToMidi(
   });
 
   globalBooleanVariables.refreshDisplay.addOnChangeCallback((context) => {
-    device.displayStateManager.refreshAllChannels(context);
+    // Don't refresh during page activation - callbacks haven't populated data yet
+    if (!device.displayStateManager.getIsActivatingPage()) {
+      device.displayStateManager.refreshAllChannels(context);
+    }
   });
 
   // Master Section

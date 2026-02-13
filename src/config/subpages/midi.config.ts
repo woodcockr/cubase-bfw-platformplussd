@@ -49,5 +49,10 @@ export const MIDI_CONFIG: BindingConfig = {
     logMessage: 'from script: Platform M+ page "Midi" activated'
     // Note: LCD initialization is handled in midi.ts since it requires
     // access to midi_cc config and LcdManager
+  },
+
+  displayBindings: {
+    knobsBound: false,
+    fadersBound: false
   }
 };

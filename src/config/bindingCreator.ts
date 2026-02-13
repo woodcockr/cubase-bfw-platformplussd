@@ -822,9 +822,8 @@ export class BindingCreator {
       // Set current page ID in global state
       this.globalBooleanVariables.currentPageId.set(activeDevice, config.id);
 
-      // Initialize page in DisplayStateManager and set as active
+      // Initialize page in DisplayStateManager (but don't set as active yet)
       this.device.displayStateManager.initializePage(config.id);
-      this.device.displayStateManager.setActivePage(activeDevice, config.id);
 
       if (config.activation?.logMessage) {
         console.log(config.activation.logMessage);
@@ -842,7 +841,7 @@ export class BindingCreator {
 
             // Track settings that affect display
             if (
-              ['displayChannelValueName', 'displayParameterTitle', 'areFadersBound', 'areKnobsBound', 'areDisplayRowsFlipped', 'isValueDisplayModeActive']
+              ['displayChannelValueName', 'displayParameterTitle', 'areDisplayRowsFlipped', 'isValueDisplayModeActive']
                 .indexOf(varConfig.name) !== -1
             ) {
               pageSettings[varConfig.name] = varConfig.value;
@@ -855,29 +854,49 @@ export class BindingCreator {
         }
       }
 
-      // Apply page settings to DisplayStateManager
+      if (config.displayBindings) {
+        pageSettings.areKnobsBound = config.displayBindings.knobsBound;
+        pageSettings.areFadersBound = config.displayBindings.fadersBound;
+      }
+
+      // Apply display line configuration if present
+      if (config.displayLineConfiguration) {
+        pageSettings.displayLineConfiguration = config.displayLineConfiguration;
+      }
+
+      // Apply page settings to DisplayStateManager BEFORE setting as active
+      // This ensures refresh happens with correct configuration
       if (Object.keys(pageSettings).length > 0) {
         this.device.displayStateManager.updatePageSettings(activeDevice, config.id, pageSettings);
       }
 
-      if (config.activation?.lcdTextLine0) {
-        this.device.lcdManager?.setTextLine(activeDevice, 0, config.activation.lcdTextLine0);
+      // NOW activate the page, which triggers refreshAllChannels() with correct settings
+      this.device.displayStateManager.setActivePage(activeDevice, config.id);
 
-        // Restore indicators after LCD updates to ensure they persist
-        // The setTextLine call above may have cleared the indicators, so restore them
-        this.device.lcdManager?.restoreCurrentIndicators(activeDevice);
-      }
+      // TODO What is this doing here?
+      // if (config.activation?.lcdTextLine0) {
+      //   this.device.lcdManager?.setTextLine(activeDevice, 0, config.activation.lcdTextLine0);
 
+      //   // Restore indicators after LCD updates to ensure they persist
+      //   // The setTextLine call above may have cleared the indicators, so restore them
+      //   this.device.lcdManager?.restoreCurrentIndicators(activeDevice);
+      // }
+
+      // TODO What is this doing here?
       // Send MIDI output if configured
-      if (config.activation?.midiOutput?.onActivate) {
-        for (const midi of config.activation.midiOutput.onActivate) {
-          this.device.midiPortPair.output.sendMidi(activeDevice, [
-            midi.status,
-            midi.data1,
-            midi.data2 ?? 0,
-          ]);
-        }
-      }
+      // if (config.activation?.midiOutput?.onActivate) {
+      //   for (const midi of config.activation.midiOutput.onActivate) {
+      //     this.device.midiPortPair.output.sendMidi(activeDevice, [
+      //       midi.status,
+      //       midi.data1,
+      //       midi.data2 ?? 0,
+      //     ]);
+      //   }
+      // }
+
+      // Complete page activation - this enables display refreshes and does final refresh
+      // with all the data populated by callbacks
+      this.device.displayStateManager.completePageActivation(activeDevice);
     };
 
     // Add deactivation handler if MIDI output is configured

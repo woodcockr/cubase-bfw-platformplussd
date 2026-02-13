@@ -196,9 +196,12 @@ Execute code when subpage activates:
     "globalVariables": [
       { "name": "displayChannelValueName", "value": false },
       { "name": "displayParameterTitle", "value": false },
-      { "name": "areKnobsBound", "value": false },
       { "name": "refreshDisplay", "action": "toggle" }
-    ]
+    ],
+    "displayBindings": {
+      "knobsBound": true,
+      "fadersBound": true
+    }
   }
 }
 ```

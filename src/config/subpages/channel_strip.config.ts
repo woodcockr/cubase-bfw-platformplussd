@@ -88,11 +88,20 @@ function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], na
       globalVariables: [
         { name: 'displayChannelValueName', value: true },
         { name: 'displayParameterTitle', value: true },
-        { name: 'areKnobsBound', value: false },
-        { name: 'areFadersBound', value: false },
         { name: 'refreshDisplay', action: 'toggle' },
       ],
       lcdTextLine0: name,
+    },
+
+    displayBindings: {
+      knobsBound: false,
+      fadersBound: true
+    },
+
+    displayLineConfiguration: {
+      line0Default: 'none',
+      line1Default: 'faderValue',
+      toggleable: false
     },
   };
 }

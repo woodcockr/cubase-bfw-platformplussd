@@ -167,8 +167,6 @@ export const SENDS_QC_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: true },
       { name: 'displayParameterTitle', value: true },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -181,6 +179,18 @@ export const SENDS_QC_CONFIG: BindingConfig = {
       ],
       onDeactivate: [{ status: 0x90, data1: 0, data2: 0 }]
     }
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: true
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'trackName',
+    line0Toggle: 'faderValue',
+    line1Default: 'parameterName',
+    toggleable: true
   }
 };
 
@@ -261,8 +271,6 @@ export const EQ_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: true },
       { name: 'displayParameterTitle', value: false },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -275,6 +283,18 @@ export const EQ_CONFIG: BindingConfig = {
       ],
       onDeactivate: [{ status: 0x90, data1: 1, data2: 0 }]
     }
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: false
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'faderValue',
+    toggleable: true
   }
 };
 
@@ -356,8 +376,6 @@ export const CUE_SENDS_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: false },
       { name: 'displayParameterTitle', value: false },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -370,6 +388,18 @@ export const CUE_SENDS_CONFIG: BindingConfig = {
       ],
       onDeactivate: [{ status: 0x90, data1: 3, data2: 0 }]
     }
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: true
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'trackName',
+    line0Toggle: 'faderValue',
+    line1Default: 'parameterName',
+    toggleable: true
   }
 };
 
@@ -528,8 +558,6 @@ export const PRE_FILTER_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: true },
       { name: 'displayParameterTitle', value: false },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -542,5 +570,17 @@ export const PRE_FILTER_CONFIG: BindingConfig = {
       ],
       onDeactivate: [{ status: 0x90, data1: 2, data2: 0 }]
     }
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: false
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'faderValue',
+    toggleable: true
   }
 };

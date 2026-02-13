@@ -149,9 +149,18 @@ export const CONTROL_ROOM_CONFIG: BindingConfig = {
     globalVariables: [
       { name: 'displayChannelValueName', value: false },
       { name: 'displayParameterTitle', value: true },
-      { name: 'areKnobsBound', value: false },
-      { name: 'areFadersBound', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
+  },
+
+  displayBindings: {
+    knobsBound: true,
+    fadersBound: true
+  },
+
+  displayLineConfiguration: {
+    line0Default: 'none',
+    line1Default: 'trackName',
+    toggleable: false
   }
 };

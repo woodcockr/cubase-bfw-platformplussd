@@ -14,6 +14,8 @@ export interface BindingConfig {
   hostAccessor?: string; // Type of host accessor to create
   hostAccessorFactory?: HostAccessorFactory;
   bindings: BindingDefinitions;
+  displayBindings?: DisplayBindings;
+  displayLineConfiguration?: DisplayLineConfiguration; // Per-page display layout
   activation?: ActivationConfig;
   customHandlers?: CustomHandlerDefinition[]; // Custom handlers for bindings
 }
@@ -57,6 +59,54 @@ export interface BindingDefinitions {
   commandBindings?: CommandBinding[]; // Non-value command bindings
   dummyBindings?: string[]; // Surface control paths to bind to dummy (all channels)
   dummyChannelRanges?: DummyChannelRange[]; // Multiple ranges of dummy bindings
+}
+
+/**
+ * Per-page display binding presence
+ */
+export interface DisplayBindings {
+  knobsBound: boolean;
+  fadersBound: boolean;
+}
+
+/**
+ * Display line configuration for per-page display layout
+ * Defines what content should display on each line (encoder row and fader row)
+ *
+ * Example:
+ * - Mixer: Line 0 shows track titles, Line 1 shows encoder values (or can toggle to fader values)
+ * - Control Room: Line 0 always shows track names, Line 1 always shows fader values
+ */
+export type LineDisplayMode = 'trackName' | 'faderValue' | 'encoderValue' | 'parameterName' | 'none';
+
+export interface DisplayLineConfiguration {
+  /**
+   * Default line 0 (encoder row) display mode when display toggle is off
+   */
+  line0Default: LineDisplayMode;
+
+  /**
+   * What line 0 should show when display toggle is on (if different from default)
+   * If not specified, toggle does not affect line 0
+   */
+  line0Toggle?: LineDisplayMode;
+
+  /**
+   * Default line 1 (fader row) display mode when display toggle is off
+   */
+  line1Default: LineDisplayMode;
+
+  /**
+   * What line 1 should show when display toggle is on (if different from default)
+   * If not specified, toggle does not affect line 1
+   */
+  line1Toggle?: LineDisplayMode;
+
+  /**
+   * Whether this page supports toggling display modes
+   * If false, display is always shown in default mode
+   */
+  toggleable: boolean;
 }
 
 /**

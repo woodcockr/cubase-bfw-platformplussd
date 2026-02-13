@@ -107,26 +107,6 @@ export function makeSubPages(
           )
           .setSubPage(subPage);
       }
-      // TODO Leave this here for the moment. We may want to use them for more detailed page selection or for something else on the shift page.
-      // // Mute buttons activate Selected Track subpages
-      // if (subpages.selectedTrack && subpages.selectedTrack[index]) {
-      //   const muteBinding = page
-      //     .makeActionBinding(
-      //       channelControl.buttons.mute.mSurfaceValue,
-      //       subpages.selectedTrack[index].mAction.mActivate
-      //     )
-      //     .setSubPage(subPage);
-      // }
-
-      // // Solo buttons activate Channel Strip subpages
-      // if (subpages.channelStrip && subpages.channelStrip[index]) {
-      //   const soloBinding = page
-      //     .makeActionBinding(
-      //       channelControl.buttons.solo.mSurfaceValue,
-      //       subpages.channelStrip[index].mAction.mActivate
-      //     )
-      //     .setSubPage(subPage);
-      // }
     });
 
     // Custom mOnActivate handler that replicates BindingCreator behavior plus LCD setup
@@ -148,17 +128,18 @@ export function makeSubPages(
       // Update global variables (from SHIFT_PAGE_CONFIG activation.globalVariables)
       globalBooleanVariables.displayChannelValueName.set(activeDevice, false);
       globalBooleanVariables.displayParameterTitle.set(activeDevice, true);
-      globalBooleanVariables.areKnobsBound.set(activeDevice, false);
-      globalBooleanVariables.areFadersBound.set(activeDevice, false);
       globalBooleanVariables.refreshDisplay.toggle(activeDevice);
 
       // Update page settings in DisplayStateManager
-      device.displayStateManager.updatePageSettings(activeDevice, pageId, {
+      const pageSettings: any = {
         displayChannelValueName: false,
         displayParameterTitle: true,
-        areKnobsBound: false,
-        areFadersBound: false,
-      });
+      };
+      if (SHIFT_PAGE_CONFIG.displayBindings) {
+        pageSettings.areKnobsBound = SHIFT_PAGE_CONFIG.displayBindings.knobsBound;
+        pageSettings.areFadersBound = SHIFT_PAGE_CONFIG.displayBindings.fadersBound;
+      }
+      device.displayStateManager.updatePageSettings(activeDevice, pageId, pageSettings);
 
       // Helper function to format label with prefix (max 6 chars)
       function formatLabel(label: string): string {

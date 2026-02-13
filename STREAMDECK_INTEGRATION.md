@@ -147,10 +147,116 @@ device.sdPortPair.output.sendMidi(context, [
 
 **Stream Deck Script** (listening for message type `01`):
 ```javascript
-[(sysex:F0 7D 01 XX F7)  // Note: 01 instead of 00
+[(sysex:F0 7D 01 XX F7)  // Note: 01 for display line toggle status
   {text:#@e_sysextext#}
 ]
 ```
+
+## Display Line Toggle Button (New Feature)
+
+The MIDI Remote now includes a Stream Deck button to toggle between default and alternate display line configurations per page.
+
+### Display Line Modes
+
+Each page is configured with flexible display line options:
+
+- **Default Mode**: Primary display configuration for the page
+- **Toggle Mode**: Alternate display configuration when the button is active
+
+### Page-Specific Configurations
+
+| Page | Line 0 Default | Line 0 Toggle | Line 1 Default | Toggleable |
+|------|---|---|---|---|
+| **Mixer** | Track Name | Fader Value | Parameter Name | Yes |
+| **Control Room** | Track Name | — | Fader Value | No |
+| **Channel Strip** | None | — | Fader Value | No |
+| **Cue Sends** | Track Name | Fader Value | Parameter Name | Yes |
+| **EQ** | Parameter Name | Encoder Value | Fader Value | Yes |
+| **PreFilter** | Parameter Name | Encoder Value | Fader Value | Yes |
+| **Sends QC** | Track Name | Fader Value | Parameter Name | Yes |
+| **MIDI CC** | (No display) | — | (No display) | No |
+| **Shift** | (Labels only) | — | (Custom) | No |
+
+### Setup Instructions
+
+#### Step 1: Configure Virtual MIDI Ports
+
+Follow the "Port Configuration" section above to set up virtual MIDI ports for Stream Deck communication.
+
+#### Step 2: Create Stream Deck Button
+
+1. In **Stream Deck**, create a new button and set its action to **MIDI**
+2. Configure the MIDI action with:
+   - **Type**: Control Change (CC)
+   - **Channel**: 2 (displayed) / 1 (0-indexed in code)
+   - **Control**: 127
+   - **Value**: 127 (pressed action)
+
+3. Set the button text action to display the current mode:
+   - **Text**: `{text:Display Lines}`
+   - OR add the MIDI SysEx event handler below
+
+#### Step 3: Add Text Display Handler (Optional)
+
+To show the current display line mode on the button, add this Stream Deck MIDI script:
+
+```javascript
+// Stream Deck MIDI Script for Display Line Toggle Button
+[
+  // Listen for sysex messages with manufacturer ID 7D and message type 01
+  (sysex:F0 7D 01 XX F7)
+  {
+    text:{text:#@e_sysextext#}
+  }
+]
+```
+
+This will:
+- Capture SysEx messages from the MIDI Remote (format: `F0 7D 01 <ASCII> F7`)
+- Parse the ASCII text and display it on the button
+- Show "Line: DEF" when in default mode
+- Show "Line: ALT" when in alternate (toggled) mode
+
+#### Step 4: Test the Integration
+
+1. Ensure both Cubase and Stream Deck are running
+2. Verify the virtual MIDI ports are connected
+3. Press the Display Line Toggle button on Stream Deck
+4. Observe:
+   - Display line configuration changes on Icon Platform M+ display
+   - Stream Deck button text updates to show current mode (if script configured)
+
+### Example Workflow
+
+**Mixer Page with Display Toggle**:
+
+1. **Default Mode** (Display Line Toggle OFF):
+   - Line 0 (Top): Track Names (e.g., "Audio 01", "Bass", "Drums")
+   - Line 1 (Bottom): Parameter Names (e.g., "Pan", "Pan", "Pan")
+
+2. **Toggle Mode** (Display Line Toggle ON):
+   - Line 0 (Top): Fader Values (e.g., "-6.0dB", "0.0dB", "+3.0dB")
+   - Line 1 (Bottom): Parameter Names (unchanged)
+
+3. **Use Case**: Show fader values when adjusting levels, then toggle back to track names for overview
+
+### Troubleshooting Display Line Toggle
+
+#### Button doesn't respond
+
+1. Verify CC 127 on channel 2 is not used by other controls
+2. Check that virtual MIDI ports are connected
+3. Monitor MIDI using MIDI-OX or similar tool
+
+#### Display doesn't change
+
+1. Ensure the page supports toggling (check Toggleable column in table above)
+2. Control Room page does NOT support toggling (fixed configuration)
+3. Check that displayLineConfiguration is properly set in page config
+
+#### Text not appearing on button
+
+Follow the "Troubleshooting" section below regarding SysEx messages.
 
 ## Troubleshooting
 
