@@ -139,7 +139,7 @@ export function bindDeviceToMidi(
       // Clear local value mode after 1 second
       setTimeout(
         context,
-        `clearLocalValueMode${channelIndex}`,
+        `clearLocalEncoderValueMode${channelIndex}`,
         (context) => {
           const pageId = globalBooleanVariables.currentPageId.get(context);
           device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
@@ -228,6 +228,17 @@ export function bindDeviceToMidi(
       const displayValue = units ? `${value} ${units}` : value;
       const pageId = globalBooleanVariables.currentPageId.get(context);
       device.displayStateManager.updateFaderValue(context, pageId, channelIndex, displayValue);
+
+      // Clear local value mode after 1 second
+      setTimeout(
+        context,
+        `clearLocalFaderValueMode${channelIndex}`,
+        (context) => {
+          const pageId = globalBooleanVariables.currentPageId.get(context);
+          device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
+        },
+        1
+      );
     };
   }
 
