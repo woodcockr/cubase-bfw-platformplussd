@@ -133,20 +133,6 @@ export class DisplayStateManager {
     this.initializePage(pageId);
     const state = this.pageStates.get(pageId)!;
     state.isActive = true;
-
-    // Clear all channel data for fresh start - callbacks will repopulate
-    // TODO: Fairly certain this is incorrect - the callbacks will not always repopulate and we want to preserve existing data. Need to rethink this logic.
-    // state.channels.clear();
-    // state.localValueModeActive.clear();
-
-    // Clear displays for all channels
-    // TODO: similarly to much reliance on the callbacks to populate data - refresh with the stored data instead and then let the callbacks update as needed? Need to rethink this logic.
-    // for (let i = 0; i < 8; i++) {
-    //   const row0 = state.areDisplayRowsFlipped ? 1 : 0;
-    //   const row1 = state.areDisplayRowsFlipped ? 0 : 1;
-    //   this.lcdManager.setChannelText(context, row0, i, '');
-    //   this.lcdManager.setChannelText(context, row1, i, '');
-    // }
   }
 
   /**
@@ -233,7 +219,6 @@ export class DisplayStateManager {
     channelIndex: number,
     displayValue: string
   ): void {
-    // TODO this.initializePage(pageId);
     const state = this.pageStates.get(pageId)!;
 
     if (!state.channels.has(channelIndex)) {
@@ -280,9 +265,6 @@ export class DisplayStateManager {
     channelIndex: number,
     displayValue: string
   ): void {
-    // TODO This seems wrong
-    // this.initializePage(pageId);
-
     const state = this.pageStates.get(pageId)!;
 
     if (!state.channels.has(channelIndex)) {

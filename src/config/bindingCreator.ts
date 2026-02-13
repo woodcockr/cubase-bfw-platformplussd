@@ -869,27 +869,6 @@ export class BindingCreator {
       // NOW activate the page, which triggers refreshAllChannels() with correct settings
       this.device.displayStateManager.setActivePage(activeDevice, config.id);
 
-      // TODO What is this doing here?
-      // if (config.activation?.lcdTextLine0) {
-      //   this.device.lcdManager?.setTextLine(activeDevice, 0, config.activation.lcdTextLine0);
-
-      //   // Restore indicators after LCD updates to ensure they persist
-      //   // The setTextLine call above may have cleared the indicators, so restore them
-      //   this.device.lcdManager?.restoreCurrentIndicators(activeDevice);
-      // }
-
-      // TODO What is this doing here?
-      // Send MIDI output if configured
-      // if (config.activation?.midiOutput?.onActivate) {
-      //   for (const midi of config.activation.midiOutput.onActivate) {
-      //     this.device.midiPortPair.output.sendMidi(activeDevice, [
-      //       midi.status,
-      //       midi.data1,
-      //       midi.data2 ?? 0,
-      //     ]);
-      //   }
-      // }
-
       // Complete page activation - this enables display refreshes and does final refresh
       // with all the data populated by callbacks
       this.device.displayStateManager.completePageActivation(activeDevice);
