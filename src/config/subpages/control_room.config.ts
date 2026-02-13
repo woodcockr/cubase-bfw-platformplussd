@@ -147,8 +147,6 @@ export const CONTROL_ROOM_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "ControlRoom" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: false },
-      { name: 'displayParameterTitle', value: true },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
   },

@@ -15,8 +15,6 @@ export const createGlobalBooleanVariables = () => ({
   refreshDisplay: new BooleanContextStateVariable(), // Toggling this will refresh the display with TrackTitles etc)
   areDisplayRowsFlipped: new BooleanContextStateVariable(),
   isFlipModeActive: new BooleanContextStateVariable(),
-  displayChannelValueName: new BooleanContextStateVariable(),
-  displayParameterTitle: new BooleanContextStateVariable(),
   isMidiCcPageActive: new BooleanContextStateVariable(),
   currentPageId: new ContextStateVariable('unknown'), // Track current active page
   displayLineToggleActive: new BooleanContextStateVariable(false), // Toggle for alternate display line modes
@@ -251,20 +249,6 @@ export function bindDeviceToMidi(
     const pageId = globalBooleanVariables.currentPageId.get(context);
     device.displayStateManager.updatePageSettings(context, pageId, {
       areDisplayRowsFlipped: value,
-    });
-  });
-
-  globalBooleanVariables.displayChannelValueName.addOnChangeCallback((context, value) => {
-    const pageId = globalBooleanVariables.currentPageId.get(context);
-    device.displayStateManager.updatePageSettings(context, pageId, {
-      displayChannelValueName: value,
-    });
-  });
-
-  globalBooleanVariables.displayParameterTitle.addOnChangeCallback((context, value) => {
-    const pageId = globalBooleanVariables.currentPageId.get(context);
-    device.displayStateManager.updatePageSettings(context, pageId, {
-      displayParameterTitle: value,
     });
   });
 

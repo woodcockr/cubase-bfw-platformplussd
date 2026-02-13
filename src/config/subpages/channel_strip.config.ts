@@ -86,8 +86,6 @@ function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], na
     activation: {
       logMessage: `from script: Platform M+ page "${name}" activated`,
       globalVariables: [
-        { name: 'displayChannelValueName', value: true },
-        { name: 'displayParameterTitle', value: true },
         { name: 'refreshDisplay', action: 'toggle' },
       ],
       lcdTextLine0: name,

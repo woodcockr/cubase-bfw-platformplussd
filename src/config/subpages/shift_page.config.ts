@@ -42,8 +42,6 @@ export const SHIFT_PAGE_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "Shift Page" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: false },
-      { name: 'displayParameterTitle', value: true },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
   },

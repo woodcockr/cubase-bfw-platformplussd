@@ -126,8 +126,6 @@ export function makeSubPages(
       console.log('from script: Platform M+ page "Shift Page" activated');
 
       // Update global variables (from SHIFT_PAGE_CONFIG activation.globalVariables)
-      globalBooleanVariables.displayChannelValueName.set(activeDevice, false);
-      globalBooleanVariables.displayParameterTitle.set(activeDevice, true);
       globalBooleanVariables.refreshDisplay.toggle(activeDevice);
 
       // Update page settings in DisplayStateManager

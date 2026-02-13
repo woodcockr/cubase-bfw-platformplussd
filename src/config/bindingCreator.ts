@@ -837,7 +837,7 @@ export class BindingCreator {
 
             // Track settings that affect display
             if (
-              ['displayChannelValueName', 'displayParameterTitle', 'areDisplayRowsFlipped', 'isValueDisplayModeActive']
+              ['areDisplayRowsFlipped', 'isValueDisplayModeActive']
                 .indexOf(varConfig.name) !== -1
             ) {
               pageSettings[varConfig.name] = varConfig.value;

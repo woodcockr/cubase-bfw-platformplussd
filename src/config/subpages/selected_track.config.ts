@@ -165,8 +165,6 @@ export const SENDS_QC_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "Sends QC" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: true },
-      { name: 'displayParameterTitle', value: true },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -269,8 +267,6 @@ export const EQ_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "EQ" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: true },
-      { name: 'displayParameterTitle', value: true },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -375,8 +371,6 @@ export const CUE_SENDS_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "Cue Sends" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: false },
-      { name: 'displayParameterTitle', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -557,8 +551,6 @@ export const PRE_FILTER_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "PreFilter" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: true },
-      { name: 'displayParameterTitle', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {

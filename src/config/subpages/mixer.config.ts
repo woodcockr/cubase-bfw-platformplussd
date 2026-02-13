@@ -89,8 +89,6 @@ export const MIXER_CONFIG: BindingConfig = {
   activation: {
     logMessage: 'from script: Platform M+ page "Mixer" activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: false },
-      { name: 'displayParameterTitle', value: false },
       { name: 'refreshDisplay', action: 'toggle' }
     ]
   },
