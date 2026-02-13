@@ -49,8 +49,8 @@ export type TimerUtils = ReturnType<typeof makeTimerUtils>;
 
 export function makeTimerUtils(
   driver: MR_DeviceDriver,
-  page: MR_FactoryMappingPage,
-  surface: MR_DeviceSurface,
+  _page: MR_FactoryMappingPage,
+  _surface: MR_DeviceSurface,
   isAPIVersion1_1: boolean
 ) {
   const timeouts: Record<
@@ -86,7 +86,7 @@ export function makeTimerUtils(
    * timeout and overrides its callback.
    */
   const setTimeout = (
-    context: MR_ActiveDevice,
+    _context: MR_ActiveDevice,
     timeoutId: string,
     callback: (context: MR_ActiveDevice) => void,
     timeout: number

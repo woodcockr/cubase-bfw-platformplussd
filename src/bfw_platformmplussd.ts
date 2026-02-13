@@ -15,12 +15,11 @@ Reflect.get = undefined;
 
 import midiremote_api from "midiremote_api_v1";
 import { decoratePage } from "./decorators/page";
-import { decorateSurface, DecoratedDeviceSurface } from "./decorators/surface";
-import { makePortPair } from "./midi/PortPair";
+import { decorateSurface } from "./decorators/surface";
 import { setupDeviceConnection } from "./midi/connection"
 import { makeTimerUtils } from "./util";
 import { createGlobalBooleanVariables, bindDeviceToMidi } from "./midi/binding"
-import { IconPlatformMplus, ChannelSurfaceElements, makeChannelControls, makeMasterControl, makeTransport } from "./icon_elements";
+import { IconPlatformMplus } from "./icon_elements";
 import { makePageWithDefaults } from "./master_controls"
 import * as mixer from "./mixer"
 import * as control_room from "./control_room"

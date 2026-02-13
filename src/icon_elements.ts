@@ -1,10 +1,8 @@
-import { createElements, getArrayElements } from "./util";
+import { createElements } from "./util";
 import {
   DecoratedDeviceSurface,
-  DecoratedLamp,
   JogWheel,
   LedButton,
-  LedPushEncoder,
   TouchSensitiveFader,
 } from "./decorators/surface";
 import { LcdManager } from "./midi/LcdManager";

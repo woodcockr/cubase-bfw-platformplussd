@@ -4,12 +4,9 @@ import {
   BooleanContextStateVariable,
   ContextStateVariable,
   TimerUtils,
-  createElements,
 } from "../util";
 import { PortPair } from "./PortPair";
 import { ActivationCallbacks } from "./connection";
-import { LcdManager } from "./LcdManager";
-import { DisplayStateManager } from "./DisplayStateManager";
 
 /** Declares some global context-dependent variables that (may) affect multiple devices */
 export const createGlobalBooleanVariables = () => ({
@@ -306,7 +303,7 @@ export function bindDeviceToMidi(
     });
   }
 
-  master.fader.mTouchedValue.mOnProcessValueChange = (context, touched, value2) => {
+  master.fader.mTouchedValue.mOnProcessValueChange = (context, _touched, value2) => {
     if (globalBooleanVariables.isMidiCcPageActive.get(context)) {
       return;
     }

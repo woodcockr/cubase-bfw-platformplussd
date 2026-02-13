@@ -3,7 +3,7 @@ import { GlobalBooleanVariables } from "./midi/binding";
 import { ActivationCallbacks } from "./midi/connection"
 
 // Mappings for the default areas - transport, zoom, knob
-export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks ) : MR_FactoryMappingPage{
+export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, _globalBooleanVariables: GlobalBooleanVariables, _activationCallbacks: ActivationCallbacks ) : MR_FactoryMappingPage{
   var page = deviceDriver.mMapping.makePage(name)
 
   var jogSubPageArea = page.makeSubPageArea('Jog')

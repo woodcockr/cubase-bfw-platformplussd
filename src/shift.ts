@@ -55,7 +55,7 @@ export function makeSubPages(
     )
     .setSubPage(subPage);
 
-  recordBinding.mOnValueChange = (context, mapping, value) => {
+  recordBinding.mOnValueChange = (context, _mapping, value) => {
     if (value) {
       globalBooleanVariables.isValueDisplayModeActive.toggle(context);
 
@@ -100,7 +100,7 @@ export function makeSubPages(
       ];
       // Select buttons activate specific pages (cycling through first 3)
       if (index < labelData.length && labelData[index]) {
-        const selectBinding = page
+        page
           .makeActionBinding(
             channelControl.buttons.select.mSurfaceValue,
             labelData[index].page.mAction.mActivate
@@ -113,7 +113,7 @@ export function makeSubPages(
     // NOTE: We inline the logic instead of calling the original handler to avoid Duktape
     // compatibility issues. See DUKTAPE_COMPATIBILITY.md for details on why chaining
     // function references causes "DukValue is uninitialized" errors in Cubase.
-    subPage.mOnActivate = (activeDevice: any, activeMapping: any) => {
+    subPage.mOnActivate = (activeDevice: any, _activeMapping: any) => {
       // Set current page ID in global state
       const pageId = 'shift';
       globalBooleanVariables.currentPageId.set(activeDevice, pageId);

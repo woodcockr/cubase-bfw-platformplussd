@@ -118,7 +118,7 @@ export class DisplayStateManager {
   /**
    * Set the active page
    */
-  setActivePage(context: MR_ActiveDevice, pageId: string): void {
+  setActivePage(_context: MR_ActiveDevice, pageId: string): void {
     // Deactivate previous page
     if (this.activePageId && this.pageStates.has(this.activePageId)) {
       const prevState = this.pageStates.get(this.activePageId)!;
@@ -505,15 +505,11 @@ export class DisplayStateManager {
   /**
    * Clear encoder row (Row 0) display for a specific channel
    */
-  private clearEncoderDisplay(context: MR_ActiveDevice, channelIndex: number): void {
-    const row = this.getActivePageState()?.areDisplayRowsFlipped ? 1 : 0;
-    this.lcdManager.setChannelText(context, row, channelIndex, '');
-  }
   /**
    * Get display text for a given line based on configuration and toggle state
    */
   private getDisplayTextForLine(
-    context: MR_ActiveDevice,
+    _context: MR_ActiveDevice,
     lineNum: 0 | 1,
     channelData: ChannelDisplayData,
     displayLineConfig?: DisplayLineConfiguration,

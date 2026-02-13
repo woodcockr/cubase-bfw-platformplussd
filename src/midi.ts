@@ -57,7 +57,7 @@ export function makeSubPages(
       .setValueTakeOverModeJump()
 
     // Fader handler: send MIDI CC using current CC number
-    valueBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, mapping: any, value: number) => {
+    valueBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, _mapping: any, value: number) => {
       const ccValue = Math.ceil(value * 127)
 
       // Send back to icon fader
@@ -84,7 +84,7 @@ export function makeSubPages(
     )
 
     // Encoder handler: use raw absolute value (0-127) from encoder
-    encoderBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, mapping: any, value: number) => {
+    encoderBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, _mapping: any, value: number) => {
       if (!globalBooleanVariables.isMidiCcPageActive.get(activeDevice)) {
         return;
       }
@@ -113,7 +113,7 @@ export function makeSubPages(
   encoderBindings.forEach(binding => binding.setSubPage(subPageMIDICC))
 
   // Override activation handler for LCD initialization
-  subPageMIDICC.mOnActivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+  subPageMIDICC.mOnActivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
     // Set current page ID in global state
     const pageId = 'midicc';
     globalBooleanVariables.currentPageId.set(activeDevice, pageId);
@@ -140,7 +140,7 @@ export function makeSubPages(
   }
 
   // Deactivation handler to clear display
-  subPageMIDICC.mOnDeactivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+  subPageMIDICC.mOnDeactivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
     console.log('from script: Platform M+ page "Midi" deactivated')
 
     globalBooleanVariables.isMidiCcPageActive.set(activeDevice, false);

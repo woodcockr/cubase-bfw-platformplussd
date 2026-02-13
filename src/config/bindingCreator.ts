@@ -9,13 +9,9 @@ import { DecoratedFactoryMappingPage } from '../decorators/page';
 import {
   BindingConfig,
   PerChannelBinding,
-  PerChannelMultiBinding,
-  IndexedChannelBinding,
-  FixedIndexBinding,
   BindingOptions,
   ChannelRange,
   DummyChannelRange,
-  CommandBinding,
 } from './bindingConfig';
 
 /**
@@ -552,7 +548,7 @@ export class BindingCreator {
     channelIndex: number,
     hostValue: any,
     subPage: MR_SubPage,
-    bindingType: 'per-channel' | 'fixed' | 'variable'
+    _bindingType: 'per-channel' | 'fixed' | 'variable'
   ): void {
     const surfaceValue = this.resolveSurfaceValue(channelIndex, binding.surface);
 
@@ -818,7 +814,7 @@ export class BindingCreator {
     config: BindingConfig,
     subPage: MR_SubPage
   ): void {
-    subPage.mOnActivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+    subPage.mOnActivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
       // Set current page ID in global state
       this.globalBooleanVariables.currentPageId.set(activeDevice, config.id);
 
@@ -901,7 +897,7 @@ export class BindingCreator {
 
     // Add deactivation handler if MIDI output is configured
     if (config.activation?.midiOutput?.onDeactivate) {
-      subPage.mOnDeactivate = (activeDevice: MR_ActiveDevice, activeMapping: MR_ActiveMapping) => {
+      subPage.mOnDeactivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
         for (const midi of config.activation!.midiOutput!.onDeactivate!) {
           this.device.midiPortPair.output.sendMidi(activeDevice, [
             midi.status,

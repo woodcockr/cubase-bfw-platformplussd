@@ -242,7 +242,7 @@ export class BindingConfigLoader {
   /**
    * Load configuration from a file path (browser/runtime implementation needed)
    */
-  static async loadFromFile(filePath: string): Promise<BindingConfig[]> {
+  static async loadFromFile(_filePath: string): Promise<BindingConfig[]> {
     // This would be implemented based on the runtime environment
     // For now, we provide a stub
     throw new Error(
