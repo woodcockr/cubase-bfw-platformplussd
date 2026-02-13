@@ -73,9 +73,6 @@ export interface DisplayBindings {
  * Display line configuration for per-page display layout
  * Defines what content should display on each line (encoder row and fader row)
  *
- * Example:
- * - Mixer: Line 0 shows track titles, Line 1 shows encoder values (or can toggle to fader values)
- * - Control Room: Line 0 always shows track names, Line 1 always shows fader values
  */
 export type LineDisplayMode = 'trackName' | 'faderValue' | 'encoderValue' | 'parameterName' | 'none';
 

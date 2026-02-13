@@ -270,7 +270,7 @@ export const EQ_CONFIG: BindingConfig = {
     logMessage: 'from script: Platform M+ page "EQ" activated',
     globalVariables: [
       { name: 'displayChannelValueName', value: true },
-      { name: 'displayParameterTitle', value: false },
+      { name: 'displayParameterTitle', value: true },
       { name: 'refreshDisplay', action: 'toggle' }
     ],
     midiOutput: {
@@ -287,13 +287,14 @@ export const EQ_CONFIG: BindingConfig = {
 
   displayBindings: {
     knobsBound: true,
-    fadersBound: false
+    fadersBound: true
   },
 
   displayLineConfiguration: {
     line0Default: 'parameterName',
     line0Toggle: 'encoderValue',
-    line1Default: 'faderValue',
+    line1Default: 'parameterName',
+    line1Toggle: 'faderValue',
     toggleable: true
   }
 };
