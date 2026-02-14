@@ -109,6 +109,21 @@ export interface DisplayLineConfiguration {
    * If false, display is always shown in default mode
    */
   toggleable: boolean;
+
+  /**
+   * Optional function to transform encoder titles for display
+   * Useful for extracting/abbreviating parts of complex parameter names
+   * Example: "2- FX 02-REVelation" → "2- Revl"
+   * Can use title1 or title2 or both to determine output
+   */
+  encoderTitleTransform?: (title1: string, title2: string) => string;
+
+  /**
+   * Optional function to transform fader titles for display
+   * Useful for extracting/abbreviating parts of complex parameter names
+   * Can use title or valueTitle or both to determine output
+   */
+  faderTitleTransform?: (title: string, valueTitle: string) => string;
 }
 
 /**

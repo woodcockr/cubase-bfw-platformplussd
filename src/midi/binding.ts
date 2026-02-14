@@ -31,7 +31,7 @@ export function bindDeviceToMidi(
   const ports = device.midiPortPair;
   const sd_ports = device.sdPortPair;
 
-  function bindFader(ports: PortPair, fader: TouchSensitiveFader, faderIndex: number) {
+  function bindFader(ports: PortPair, fader: TouchSensitiveFader, faderIndex: number, device?: IconPlatformMplus) {
     fader.mSurfaceValue.mMidiBinding.setInputPort(ports.input).bindToPitchBend(faderIndex);
     fader.mTouchedValue.mMidiBinding.setInputPort(ports.input).bindToNote(0, 104 + faderIndex);
     fader.mTouchedValueInternal.mMidiBinding
@@ -69,11 +69,14 @@ export function bindDeviceToMidi(
     };
 
 
-    fader.mSurfaceValue.mOnTitleChange = (context, title) => {
+    fader.mSurfaceValue.mOnTitleChange = (context, objectTitle, valueTitle) => {
       // Ensure faders update on a title change
       forceUpdate.set(context, true);
+      // Update display state with fader title information
+      const pageId = globalBooleanVariables.currentPageId.get(context);
+      device.displayStateManager.updateFaderTitle(context, pageId, faderIndex, objectTitle, valueTitle);
       // Set fader to `0` when unassigned
-      if (title === "") {
+      if (objectTitle === "") {
         fader.mSurfaceValue.setProcessValue(context, 0);
         // `mOnProcessValueChange` somehow isn't run here on `setProcessValue()`, hence:
         lastFaderValue.set(context, 0);
@@ -213,7 +216,7 @@ export function bindDeviceToMidi(
     }
 
     // Fader
-    const channelFader = bindFader(ports, channel.fader, channelIndex);
+    const channelFader = bindFader(ports, channel.fader, channelIndex, device);
 
     // Fader display value callback
     channelFader.mSurfaceValue.mOnDisplayValueChange = (context, value, units) => {
@@ -266,7 +269,7 @@ export function bindDeviceToMidi(
     device.displayStateManager.updateIndicator2(context, 'N');
   });
 
-  bindFader(ports, master.fader, 8);
+  bindFader(ports, master.fader, 8, device);
 
   master.fader.mSurfaceValue.mOnTitleChange = (context: MR_ActiveDevice, objectTitle: string, valueTitle: string) => {
     if (globalBooleanVariables.isMidiCcPageActive.get(context)) {

@@ -8,6 +8,7 @@
  * - midiOutput: MIDI CC output on activation/deactivation
  */
 
+import abbreviate from "abbreviate";
 import { BindingConfig } from '../bindingConfig';
 
 // SendsQC subpage - per-channel sends + quick controls + fixed handy controls
@@ -189,7 +190,19 @@ export const SENDS_QC_CONFIG: BindingConfig = {
     line0Toggle: 'encoderValue',
     line1Default: 'faderValueTitle',
     line1Toggle: 'faderValue',
-    toggleable: true
+    toggleable: true,
+    encoderTitleTransform: (title1: string, title2: string): string => {
+      // Transform: "2- FX 02-REVelation" → "2-Revl"
+      // Extract: first number + '-' + abbreviated part after second '-'
+      const parts = title1.split('-');
+      if (parts.length >= 3) {
+        const firstNum = parts[0].trim();
+        const afterSecondDash = parts.slice(2).join('-').trim();
+        const abbrev = abbreviate(afterSecondDash, 4);
+        return `${firstNum}-${abbrev}`;
+      }
+      return title1;
+    }
   }
 };
 
@@ -396,7 +409,14 @@ export const CUE_SENDS_CONFIG: BindingConfig = {
     line0Toggle: 'encoderValue',
     line1Default: 'faderValueTitle',
     line1Toggle: 'faderValue',
-    toggleable: true
+    toggleable: true,
+    faderTitleTransform: (title1: string, title2: string): string => {
+      if (title1.length >= 6) {
+        const abbrev = abbreviate(title1, 6);
+        return abbrev;
+      }
+      return title1;
+    }
   }
 };
 

@@ -41,6 +41,12 @@ export interface PageDisplayState {
   // Display line configuration for this page
   displayLineConfiguration?: DisplayLineConfiguration;
 
+  // Optional encoder title transform function (per-page custom logic)
+  encoderTitleTransform?: (title1: string, title2: string) => string;
+
+  // Optional fader title transform function (per-page custom logic)
+  faderTitleTransform?: (title: string, valueTitle: string) => string;
+
   // Per-channel data for this page
   channels: Map<number, ChannelDisplayData>;
 
@@ -265,6 +271,29 @@ export class DisplayStateManager {
   }
 
   /**
+   * Update fader title for a channel
+   */
+  updateFaderTitle(
+    context: MR_ActiveDevice,
+    pageId: string,
+    channelIndex: number,
+    title: string,
+    valueTitle: string
+  ): void {
+    this.initializePage(pageId);
+    const state = this.pageStates.get(pageId)!;
+
+    const channelData = this.ensureChannelData(state, channelIndex);
+    channelData.fader.title = title;
+    channelData.fader.valueTitle = valueTitle;
+
+    // Refresh the display for this channel (unless we're still activating)
+    if (this.shouldRefreshPage(pageId)) {
+      this.refreshControlDisplay(context, channelIndex, 'fader');
+    }
+  }
+
+  /**
    * Update encoder display value for a channel
    */
   updateEncoderValue(
@@ -475,13 +504,22 @@ export class DisplayStateManager {
       case 'trackName':
         return this.abbreviate(channelData.fader.title);
       case 'faderValueTitle':
-        return this.abbreviateAndCenter(channelData.fader.valueTitle);
+        // Use custom transform if available, otherwise use valueTitle
+        const faderTitle = displayLineConfig.faderTitleTransform
+          ? displayLineConfig.faderTitleTransform(channelData.fader.title, channelData.fader.valueTitle)
+          : channelData.fader.valueTitle;
+        return this.abbreviateAndCenter(faderTitle);
       case 'faderValue':
         return this.abbreviateAndCenter(channelData.fader.displayValue);
       case 'encoderValue':
         return this.abbreviateAndCenter(channelData.encoder.displayValue);
       case 'parameterName':
-        return this.abbreviateAndCenter(channelData.encoder.title2);
+        console.log(`Displaying encoder title1/title2 for channel: "${channelData.encoder.title1}/${channelData.encoder.title2}"`);
+        // Use custom transform if available, otherwise use title2
+        const encoderTitle = displayLineConfig.encoderTitleTransform
+          ? displayLineConfig.encoderTitleTransform(channelData.encoder.title1, channelData.encoder.title2)
+          : channelData.encoder.title2;
+        return this.abbreviateAndCenter(encoderTitle);
       case 'none':
         return '';
       default:
