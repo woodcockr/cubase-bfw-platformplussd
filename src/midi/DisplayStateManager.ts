@@ -35,8 +35,6 @@ export interface PageDisplayState {
   isActive: boolean;
   areFadersBound: boolean;
   areKnobsBound: boolean;
-  displayChannelValueName: boolean;
-  displayParameterTitle: boolean;
   areDisplayRowsFlipped: boolean;
   isValueDisplayModeActive: boolean;
 
@@ -105,8 +103,6 @@ export class DisplayStateManager {
         isActive: false,
         areFadersBound: false,
         areKnobsBound: false,
-        displayChannelValueName: false,
-        displayParameterTitle: false,
         areDisplayRowsFlipped: false,
         isValueDisplayModeActive: false,
         channels: new Map(),
@@ -216,15 +212,6 @@ export class DisplayStateManager {
         state.displayLineConfiguration,
         this.displayLineToggleActive
       );
-    } else if (control === 'encoder') {
-      const parameterText = state.displayParameterTitle
-        ? channelData.encoder.title1
-        : channelData.encoder.title2;
-      displayText = this.abbreviateAndCenter(parameterText);
-    } else {
-      displayText = state.displayChannelValueName
-        ? this.abbreviateAndCenter(channelData.fader.valueTitle)
-        : this.abbreviateAndCenter(channelData.fader.title);
     }
 
     console.log(
@@ -487,6 +474,8 @@ export class DisplayStateManager {
     switch (mode) {
       case 'trackName':
         return this.abbreviate(channelData.fader.title);
+      case 'faderValueTitle':
+        return this.abbreviateAndCenter(channelData.fader.valueTitle);
       case 'faderValue':
         return this.abbreviateAndCenter(channelData.fader.displayValue);
       case 'encoderValue':

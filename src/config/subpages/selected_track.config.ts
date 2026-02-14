@@ -185,9 +185,10 @@ export const SENDS_QC_CONFIG: BindingConfig = {
   },
 
   displayLineConfiguration: {
-    line0Default: 'trackName',
-    line0Toggle: 'faderValue',
-    line1Default: 'parameterName',
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'faderValueTitle',
+    line1Toggle: 'faderValue',
     toggleable: true
   }
 };
@@ -289,7 +290,7 @@ export const EQ_CONFIG: BindingConfig = {
   displayLineConfiguration: {
     line0Default: 'parameterName',
     line0Toggle: 'encoderValue',
-    line1Default: 'parameterName',
+    line1Default: 'faderValueTitle',
     line1Toggle: 'faderValue',
     toggleable: true
   }
@@ -391,9 +392,10 @@ export const CUE_SENDS_CONFIG: BindingConfig = {
   },
 
   displayLineConfiguration: {
-    line0Default: 'trackName',
-    line0Toggle: 'faderValue',
-    line1Default: 'parameterName',
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'faderValueTitle',
+    line1Toggle: 'faderValue',
     toggleable: true
   }
 };
@@ -567,13 +569,14 @@ export const PRE_FILTER_CONFIG: BindingConfig = {
 
   displayBindings: {
     knobsBound: true,
-    fadersBound: false
+    fadersBound: true
   },
 
   displayLineConfiguration: {
     line0Default: 'parameterName',
     line0Toggle: 'encoderValue',
-    line1Default: 'faderValue',
+    line1Default: 'faderValueTitle',
+    line1Toggle: 'faderValue',
     toggleable: true
   }
 };

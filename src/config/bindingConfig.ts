@@ -72,9 +72,14 @@ export interface DisplayBindings {
 /**
  * Display line configuration for per-page display layout
  * Defines what content should display on each line (encoder row and fader row)
- *
+ * - trackName: Display the track/object name bound to fader (e.g., "Audio 01")
+ * - faderValueTitle: Display the fader's value title (e.g., "Volume", "Pan")
+ * - faderValue: Display the current fader value (e.g., "-6.0 dB")
+ * - encoderValue: Display the current encoder value
+ * - parameterName: Display the encoder's parameter name (e.g., "Low Freq")
+ * - none: Show nothing
  */
-export type LineDisplayMode = 'trackName' | 'faderValue' | 'encoderValue' | 'parameterName' | 'none';
+export type LineDisplayMode = 'trackName' | 'faderValueTitle' | 'faderValue' | 'encoderValue' | 'parameterName' | 'none';
 
 export interface DisplayLineConfiguration {
   /**

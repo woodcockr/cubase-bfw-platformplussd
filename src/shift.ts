@@ -129,10 +129,7 @@ export function makeSubPages(
       globalBooleanVariables.refreshDisplay.toggle(activeDevice);
 
       // Update page settings in DisplayStateManager
-      const pageSettings: any = {
-        displayChannelValueName: false,
-        displayParameterTitle: true,
-      };
+      const pageSettings: any = {};
       if (SHIFT_PAGE_CONFIG.displayBindings) {
         pageSettings.areKnobsBound = SHIFT_PAGE_CONFIG.displayBindings.knobsBound;
         pageSettings.areFadersBound = SHIFT_PAGE_CONFIG.displayBindings.fadersBound;
