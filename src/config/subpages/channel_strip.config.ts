@@ -97,9 +97,11 @@ function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], na
     },
 
     displayLineConfiguration: {
-      line0Default: 'none',
-      line1Default: 'faderValue',
-      toggleable: false
+    line0Default: 'parameterName',
+    line0Toggle: 'encoderValue',
+    line1Default: 'faderValueTitle',
+    line1Toggle: 'faderValue',
+    toggleable: true,
     },
   };
 }
