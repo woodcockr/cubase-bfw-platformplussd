@@ -50,7 +50,7 @@ const config: BindingConfig = {
   activation: {
     logMessage: "Mixer page activated",
     globalVariables: [
-      { name: "displayChannelValueName", value: false }
+      { name: "refreshDisplay", action: "toggle" }
     ]
   }
 };
@@ -299,7 +299,6 @@ Execute code when subpage activates with global variables and MIDI output:
   "activation": {
     "logMessage": "Mixer page activated",
     "globalVariables": [
-      { "name": "displayChannelValueName", "value": false },
       { "name": "refreshDisplay", "action": "toggle" }
     ],
     "lcdTextLine0": "Mixer",
@@ -392,7 +391,7 @@ const config = new BindingConfigBuilder('mixer', 'Mixer')
   .withActivationConfig({
     logMessage: 'Mixer activated',
     globalVariables: [
-      { name: 'displayChannelValueName', value: false }
+      { name: 'refreshDisplay', action: 'toggle' }
     ]
   })
   .build();

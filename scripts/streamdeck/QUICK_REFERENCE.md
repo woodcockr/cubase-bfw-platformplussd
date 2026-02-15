@@ -13,14 +13,14 @@ Platform M+ SD Output  (send port from MIDI Remote)
 
 ## Stream Deck Button Scripts
 
-### Display Mode Toggle Button
+### Display Mode Status Button
 
 Copy and paste this script into a Stream Deck MIDI button to display the current display line mode:
 
 ```javascript
 [
-  (init) {text:Display\nMode}
-  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
+  (init) {text:Value\nDisplay}
+  (sysex:F0 7D 00 XX F7) {text:#@e_sysextext#}
 ]
 ```
 
@@ -28,17 +28,17 @@ Copy and paste this script into a Stream Deck MIDI button to display the current
 1. Add a button to Stream Deck
 2. Search for "MIDI" action
 3. Paste the script above
-4. Optional: Map to send CC 127 on Channel 2 with value 127 on press
+4. Ensure the button is configured to listen for SysEx updates
 
 ## SysEx Message Format
 
 Messages from MIDI Remote follow this structure:
 
 ```
-F0 7D 01 <ASCII text> F7
+F0 7D 00 <ASCII text> F7
 ```
 
-- `F0 7D 01` - Header (manufacturer + message type)
+- `F0 7D 00` - Header (manufacturer + message type)
 - `<ASCII text>` - The text to display (printable characters only)
 - `F7` - End marker
 
@@ -47,11 +47,11 @@ F0 7D 01 <ASCII text> F7
 Always use this pattern in Stream Deck scripts to listen for SysEx:
 
 ```javascript
-(sysex:F0 7D 01 XX F7)
+(sysex:F0 7D 00 XX F7)
 ```
 
 Where:
-- `F0 7D 01` - Fixed header
+- `F0 7D 00` - Fixed header
 - `XX` - Wildcard for variable text bytes
 - `F7` - Fixed end
 
@@ -74,14 +74,14 @@ Special variables:
 | Script not parsing | Verify brackets match: `[ ( ) { } ]` |
 | Old text showing | Ensure `#@e_sysextext#` variable is used |
 | No response to toggle | Verify Stream Deck has correct MIDI port selected |
-| Wrong message received | Check message type matches (default: `01`) |
+| Wrong message received | Check message type matches (default: `00`) |
 
 ## Testing SysEx Reception
 
 To verify your Stream Deck receives SysEx messages:
 
 1. Open Stream Deck settings
-2. Create a test button with script: `[(sysex:F0 7D 01 XX F7) {text:RECEIVED}]`
+2. Create a test button with script: `[(sysex:F0 7D 00 XX F7) {text:RECEIVED}]`
 3. In Shift page, press Record button (Channel 1) to toggle display mode
 4. Button text should change to "RECEIVED" if messages are being received
 

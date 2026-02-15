@@ -53,10 +53,7 @@ interface PageDisplayState {
   isActive: boolean;
   areFadersBound: boolean;
   areKnobsBound: boolean;
-  displayChannelValueName: boolean;
-  displayParameterTitle: boolean;
   areDisplayRowsFlipped: boolean;
-  isValueDisplayModeActive: boolean;
 
   // Display line configuration for per-page display layout
   displayLineConfiguration?: DisplayLineConfiguration;
@@ -180,17 +177,12 @@ channelFader.mSurfaceValue.mOnDisplayValueChange = (context, value, units) => {
 #### Global Setting Callbacks:
 
 ```typescript
-globalBooleanVariables.isValueDisplayModeActive.addOnChangeCallback((context, value) => {
-  const pageId = globalBooleanVariables.currentPageId.get(context);
-  device.displayStateManager.updatePageSettings(context, pageId, {
-    isValueDisplayModeActive: value,
-  });
-});
-
 globalBooleanVariables.refreshDisplay.addOnChangeCallback((context) => {
   device.displayStateManager.refreshAllChannels(context);
 });
 ```
+
+`isValueDisplayModeActive` is global and read directly by `DisplayStateManager` during refresh, so it does not update per-page settings.
 
 ### 3. Page Activation
 
@@ -240,6 +232,10 @@ The following state is **global** and persists across page changes:
    - Shows parameter info when master fader is touched
    - Temporarily overrides channel display
 
+4. **Value Display Mode** - Global toggle from `GlobalBooleanVariables`
+  - Read directly by `DisplayStateManager` during refresh
+  - Not stored per-page
+
 ### Per-Page State (Page-Specific)
 
 The following state is **per-page** and changes when pages switch:
@@ -249,10 +245,8 @@ The following state is **per-page** and changes when pages switch:
    - Restored when returning to a page
 
 2. **Display Settings** - Store in `pageState`
-   - `displayParameterTitle` - Show title vs. name
-   - `displayChannelValueName` - Show value title vs. track title
-   - `isValueDisplayModeActive` - Show values vs. names
    - `areDisplayRowsFlipped` - Swap encoder/fader rows
+  - `displayLineConfiguration` - Per-page line layout and modes
 
 3. **Binding Status** - Store in `pageState`
   - `areFadersBound` - Whether the page is configured to show fader data (from `displayBindings`)
@@ -374,10 +368,10 @@ channelFader.mSurfaceValue.mOnDisplayValueChange = (context, value, units) => {
 ### Change Page Settings
 
 ```typescript
-globalBooleanVariables.displayParameterTitle.addOnChangeCallback((context, value) => {
+globalBooleanVariables.areDisplayRowsFlipped.addOnChangeCallback((context, value) => {
   const pageId = globalBooleanVariables.currentPageId.get(context);
   device.displayStateManager.updatePageSettings(context, pageId, {
-    displayParameterTitle: value,
+    areDisplayRowsFlipped: value,
   });
 });
 ```
@@ -390,13 +384,11 @@ globalBooleanVariables.refreshDisplay.addOnChangeCallback((context) => {
 });
 ```
 
-## Display Line Toggle Feature
-
-**New in this version**: Configurable display lines with Stream Deck button support
+## Display Line Configuration
 
 ### Overview
 
-The display line toggle allows defining different display configurations for each page, with optional runtime switching via Stream Deck button.
+Display line configuration allows defining different display layouts for each page. Runtime toggling is supported in `DisplayStateManager` but requires a custom binding to call `setDisplayLineToggle()`.
 
 ### Page Configuration
 
@@ -419,16 +411,6 @@ displayLineConfiguration: {
 - `'encoderValue'` - Display encoder values (from mOnDisplayValueChange)
 - `'parameterName'` - Display encoder parameter names
 - `'none'` - Don't display anything
-
-### Stream Deck Integration
-
-When a Stream Deck Display Line Toggle button is configured (sends CC 127 on channel 2), the MIDI Remote:
-
-1. Toggles the display line state
-2. Refreshes all displays with the new configuration
-3. Sends confirmation status back to Stream Deck
-
-See [STREAMDECK_INTEGRATION.md](STREAMDECK_INTEGRATION.md) for setup instructions.
 
 ### Global Display Line Toggle State
 
@@ -472,10 +454,9 @@ Potential improvements to the state management system:
 
 ### Display Line Toggle Not Working
 
-1. Verify Stream Deck is sending CC 127 on channel 2
-2. Check `displayLineConfiguration.toggleable` is true for the page
-3. Ensure both `line0Toggle` and `line1Toggle` are defined if you want to change both lines
-4. Confirm `setDisplayLineToggle()` is being called from the binding
+1. Check `displayLineConfiguration.toggleable` is true for the page
+2. Ensure both `line0Toggle` and `line1Toggle` are defined if you want to change both lines
+3. Confirm `setDisplayLineToggle()` is being called from the binding
 
 ### Indicators Disappearing
 

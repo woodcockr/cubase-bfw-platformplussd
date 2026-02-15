@@ -69,16 +69,16 @@ F0 7D <msg-type> <ASCII text bytes> F7
 
 - `F0` - SysEx start byte
 - `7D` - Manufacturer ID (educational/development use)
-- `<msg-type>` - Message type identifier (e.g., `01` for display mode)
+- `<msg-type>` - Message type identifier (default `00` for display mode)
 - `<ASCII text bytes>` - Variable length ASCII text (0-127 range, printable only)
 - `F7` - SysEx end byte
 
 ### Example SysEx Messages
 
-**Display Mode Status** (message type `01`):
+**Display Mode Status** (message type `00`):
 ```
-F0 7D 01 4C 69 6E 65 3A 44 45 46 F7
-              └─ ASCII: "Line:DEF"
+F0 7D 00 56 61 6C 75 65 0A 44 69 73 70 6C 61 79 0A 4F 4E F7
+              └─ ASCII: "Value\nDisplay\nON"
 ```
 
 ## Stream Deck Button Configuration
@@ -96,17 +96,17 @@ To have the button text update dynamically when display mode toggles:
 
 ```javascript
 [
-  (init) {text:Display\nMode}
-  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
+   (init) {text:Value\nDisplay}
+   (sysex:F0 7D 00 XX F7) {text:#@e_sysextext#}
 ]
 ```
 
 **Script Breakdown**:
-- `(init) {text:Display\nMode}` - Set initial button text on load
-- `(sysex:F0 7D 01 XX F7)` - Event matching SysEx with message type `01`
+- `(init) {text:Value\nDisplay}` - Set initial button text on load
+- `(sysex:F0 7D 00 XX F7)` - Event matching SysEx with message type `00`
   - `F0` - SysEx start
   - `7D` - Manufacturer ID
-  - `01` - Message type
+   - `00` - Message type
   - `XX` - Wildcard for variable text bytes
   - `F7` - SysEx end
 - `{text:#@e_sysextext#}` - Update button text with extracted ASCII
@@ -115,11 +115,11 @@ To have the button text update dynamically when display mode toggles:
 
 To handle different message types on different buttons, use different type codes:
 
-**Button 1 - Display Mode** (type `01`):
+**Button 1 - Display Mode** (type `00`):
 ```javascript
 [
-  (init) {text:Display\nMode}
-  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
+   (init) {text:Value\nDisplay}
+   (sysex:F0 7D 00 XX F7) {text:#@e_sysextext#}
 ]
 ```
 
@@ -131,50 +131,15 @@ To handle different message types on different buttons, use different type codes
 ]
 ```
 
-## Display Mode Toggle Feature
+## Value Display Mode Toggle
 
-The MIDI Remote supports toggling between display line configurations per page.
+The MIDI Remote supports a global value display mode that shows current values in the LCD.
 
 ### How It Works
 
 1. Press the **Record button (Channel 1)** on the **Shift Page**
-2. The MIDI Remote displays content in alternate configuration
-3. A SysEx message is sent to Stream Deck with the current mode
-
-### Page Support
-
-| Page | Toggleable |
-|------|-----------|
-| **Mixer** | Yes |
-| **SendsQC** | Yes |
-| **EQ** | Yes |
-| **PreFilter** | Yes |
-| **CueSends** | Yes |
-| **Gate** | Yes |
-| **Compressor** | Yes |
-| **Tools** | Yes |
-| **Saturator** | Yes |
-| **Limiter** | Yes |
-| **Control Room** | No |
-| **MIDI CC** | No |
-| **Shift** | — |
-
-### Setup Display Mode Button
-
-1. **Create Stream Deck Button**:
-   - Search for "MIDI" action
-   - Configure to send CC 127 on Channel 2 with value 127 on press
-
-2. **Add Text Update Script**:
-
-```javascript
-[
-  (init) {text:Lines}
-  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
-]
-```
-
-When you press this button or toggle display mode on the Icon Platform M+, the text will update to show the current mode.
+2. The MIDI Remote toggles value display mode
+3. A SysEx message is sent to Stream Deck with the current mode text
 
 ## Sending SysEx from MIDI Remote Code
 
@@ -182,21 +147,21 @@ When you press this button or toggle display mode on the Icon Platform M+, the t
 
 ```typescript
 // Send SysEx message to Stream Deck
-const text = "Display: ON";
+const text = "Value\nDisplay\nON";
 const textBytes: number[] = [];
 for (let i = 0; i < text.length; i++) {
   textBytes.push(text.charCodeAt(i));
 }
 
 device.sdPortPair.output.sendMidi(context, [
-  0xF0, 0x7D, 0x01, ...textBytes, 0xF7
+   0xF0, 0x7D, 0x00, ...textBytes, 0xF7
 ]);
 ```
 
 ### Message Type Identifiers
 
 Reserve these message types for specific purposes:
-- `0x01` - Display mode status
+- `0x00` - Display mode status
 - `0x02-0x7C` - Available for custom extensions
 
 ## Troubleshooting
@@ -227,7 +192,7 @@ Reserve these message types for specific purposes:
 1. Verify SysEx frame format exactly:
    - Start byte: `F0`
    - Manufacturer: `7D`
-   - Message type: `01` (or your configured value)
+   - Message type: `00` (or your configured value)
    - End byte: `F7`
 
 2. Check text contains only valid ASCII (32-126, printable):
@@ -237,7 +202,7 @@ Reserve these message types for specific purposes:
 3. Verify the special variable is correct: `#@e_sysextext#`
 
 4. Check event pattern matches message type:
-   - Button listening for `01` but message sends `00`
+   - Button listening for `00` but message sends `01`
    - Check message type byte in both code and script
 
 ### MIDI Port Connection Issues
@@ -260,18 +225,12 @@ Reserve these message types for specific purposes:
 
 ### Display Mode Not Toggling
 
-1. **Verify Page Supports Toggling**:
-   - Not all pages support display toggle (see support table above)
-   - Control Room and MIDI CC pages have fixed configurations
-
-2. **Check Configuration**:
-   - Ensure `displayLineConfiguration` is set in page config
-   - Verify `toggleable: true` is in the config
-
-3. **Test Toggle Manually**:
+1. **Test Toggle Manually**:
    - Press Record button on Channel 1 of Shift page
-   - Check if display changes on Icon Platform M+
-   - If manual toggle works, check Stream Deck SysEx reception
+   - Check if values appear on the Icon Platform M+
+
+2. **Verify SysEx Reception**:
+   - If the Icon display changes but the Stream Deck does not, check the SysEx script and port routing
 
 ## Resources
 

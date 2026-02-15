@@ -272,22 +272,31 @@ The Selected Track section has multiple sub-pages: **SendsQC**, **EQ**, **PreFil
 | 1 | Mixer Page |
 | 2 | Control Room Page |
 | 3 | MIDI CC Page |
-| 4 | Sends QC Page |
-| 5 | EQ Page |
-| 6 | PreFilter Page |
-| 7 | Gate Page |
-| 8 | (Additional effect pages) |
+| 4 | Gate Page |
+| 5 | Compressor Page |
+| 6 | Tools Page |
+| 7 | Saturator Page |
+| 8 | Limiter Page |
+
+**Button Functions** (Mute buttons on channels 1-4):
+
+| Channel | Function |
+|---------|----------|
+| 1 | EQ Page |
+| 2 | Sends QC Page |
+| 3 | PreFilter Page |
+| 4 | Cue Sends Page |
 
 **Display Mode Toggle** (Record button on Channel 1):
-- Press to toggle between default and alternate display line configurations
-- Not all pages support toggle (see page-specific display sections)
+- Press to toggle value display mode (show encoder/fader values)
+- Applies globally to pages with bound controls
 
 **Display**:
 - Scribble strips show custom page label names
 - No fader or encoder functionality on this page
 
 **Notes**:
-- All other controls (faders, encoders, other buttons) are disabled on Shift page
+- Solo buttons and all other controls (faders, encoders, other buttons) are disabled on Shift page
 - Used for quick navigation between pages
 - Display mode affects all channels on current page simultaneously
 
@@ -308,22 +317,10 @@ The Selected Track section has multiple sub-pages: **SendsQC**, **EQ**, **PreFil
 
 ## Display Mode Toggling
 
-Press the **Record button on Channel 1** in the **Shift page** to toggle display modes:
+Press the **Record button on Channel 1** in the **Shift page** to toggle value display mode:
 
-### Mixer Page Toggle
-- **Default**: Line 0 = Parameter Name, Line 1 = Track Name
-- **Toggled**: Line 0 = Encoder Value, Line 1 = Fader Value
-
-### SendsQC Page Toggle
-- **Default**: Line 0 = Parameter Name, Line 1 = Fader Value Title
-- **Toggled**: Line 0 = Encoder Value, Line 1 = Fader Value
-
-### Effect Pages Toggle (Gate, Compressor, Tools, Saturator, Limiter)
-- **Default**: Line 0 = Parameter Name, Line 1 = Fader Value Title
-- **Toggled**: Line 0 = Encoder Value, Line 1 = Fader Value
-
-### Control Room & MIDI CC Pages
-- Display mode toggle not applicable (fixed configuration)
+- **Default**: Uses each page's `displayLineConfiguration` for names/titles
+- **Value Mode**: Shows encoder/fader values where available
 
 ---
 
