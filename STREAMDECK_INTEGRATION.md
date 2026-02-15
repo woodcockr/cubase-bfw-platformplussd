@@ -8,31 +8,37 @@ The MIDI Remote script sends MIDI SysEx messages to the Stream Deck to update bu
 
 ## Prerequisites
 
-1. **Stream Deck MIDI Plugin** - Install from the [Elgato Marketplace](https://marketplace.elgato.com/product/midi-b068a591-1a69-48fe-9206-b2d24762228b)
-2. **Virtual MIDI Ports** - Configure MIDI ports for communication:
+1. **Stream Deck Software** - Install [Elgato Stream Deck application](https://www.elgato.com/en/Stream-Deck)
+2. **Stream Deck MIDI Plugin** - Install from the [Elgato Marketplace](https://marketplace.elgato.com/product/midi-b068a591-1a69-48fe-9206-b2d24762228b)
+3. **Virtual MIDI Ports** - Configure MIDI ports for communication:
    - **Windows**: Install [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) or similar virtual MIDI cable software
    - **macOS**: Create MIDI ports in Audio MIDI Setup (MIDI Studio)
+   - **Linux**: Use virtual MIDI ports or JACK connections
 
 ## MIDI Port Setup
 
 ### Port Configuration
 
-The MIDI Remote expects to find the following MIDI ports:
+The MIDI Remote expects to find the following MIDI ports specifically for Stream Deck communication:
 
 - **Input Port**: `Platform M+ SD Input`
 - **Output Port**: `Platform M+ SD Output`
 
+These are separate from the main control ports and handle SysEx communication only.
+
 ### Windows (loopMIDI)
 
-1. Open loopMIDI
+1. Open loopMIDI application
 2. Create two virtual ports:
-   - `Platform M+ SD Input`
-   - `Platform M+ SD Output`
+   - Click "+" button
+   - Enter: `Platform M+ SD Input`
+   - Click "+" button again
+   - Enter: `Platform M+ SD Output`
 3. In Stream Deck MIDI Plugin settings:
    - Set **MIDI Input** to: `Platform M+ SD Output`
    - Set **MIDI Output** to: `Platform M+ SD Input`
 
-Note: The input/output naming is reversed because what the MIDI Remote sends as output is received as input by Stream Deck.
+**Note**: The input/output naming is reversed because what the MIDI Remote sends as output is received as input by Stream Deck.
 
 ### macOS (Audio MIDI Setup)
 
@@ -47,263 +53,248 @@ Note: The input/output naming is reversed because what the MIDI Remote sends as 
    - Set **MIDI Input** to: `Platform M+ SD Output`
    - Set **MIDI Output** to: `Platform M+ SD Input`
 
+### Linux
+
+Configure virtual MIDI ports using JACK or ALSA:
+- Create virtual ports: `Platform M+ SD Input` and `Platform M+ SD Output`
+- Connect them through your MIDI routing application (Patchbay, Ardour, etc.)
+
 ## SysEx Message Format
 
 The MIDI Remote sends SysEx messages in the following format:
 
 ```
-F0 7D 00 <ASCII text bytes> F7
+F0 7D <msg-type> <ASCII text bytes> F7
 ```
 
 - `F0` - SysEx start byte
 - `7D` - Manufacturer ID (educational/development use)
-- `00` - Message type identifier
-- `<ASCII text bytes>` - Variable length ASCII text
+- `<msg-type>` - Message type identifier (e.g., `01` for display mode)
+- `<ASCII text bytes>` - Variable length ASCII text (0-127 range, printable only)
 - `F7` - SysEx end byte
 
-## Example: Display Mode Toggle Button
+### Example SysEx Messages
 
-The **Record button on channel 1** in the Shift page toggles the value display mode and sends the current status to Stream Deck.
+**Display Mode Status** (message type `01`):
+```
+F0 7D 01 4C 69 6E 65 3A 44 45 46 F7
+              └─ ASCII: "Line:DEF"
+```
 
-### Stream Deck Button Configuration
+## Stream Deck Button Configuration
 
-1. Add a **Generic MIDI** button to your Stream Deck
-2. Configure the button:
-   - **Button Type**: Script
-   - **Send on Press**: (leave empty or configure as desired)
-   - **MIDI Input Port**: Select the appropriate virtual MIDI port
-   - **MIDI Output Port**: Select the appropriate virtual MIDI port
+### Basic Setup
 
-3. **Script Configuration**:
+1. In **Stream Deck** application, open your profile
+2. Drag a button to the grid
+3. Search for "MIDI" action
+4. Configure the button action as needed
+
+### Listening for SysEx Updates (Display Mode)
+
+To have the button text update dynamically when display mode toggles:
 
 ```javascript
-// Script for Display Mode Toggle button
-
-[(init){text:Display\nMode}]
-[(sysex:F0 7D 00 XX F7){text:#@e_sysextext#}
+[
+  (init) {text:Display\nMode}
+  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
 ]
 ```
 
-### Script Explanation
-
-- `(sysex:F0 7D 00 XX F7)` - Event that triggers when a SysEx message is received:
-  - `F0` - SysEx start byte
+**Script Breakdown**:
+- `(init) {text:Display\nMode}` - Set initial button text on load
+- `(sysex:F0 7D 01 XX F7)` - Event matching SysEx with message type `01`
+  - `F0` - SysEx start
   - `7D` - Manufacturer ID
-  - `00` - Message type identifier
-  - `XX` - Wildcard for the text payload bytes
-  - `F7` - SysEx end byte
+  - `01` - Message type
+  - `XX` - Wildcard for variable text bytes
+  - `F7` - SysEx end
+- `{text:#@e_sysextext#}` - Update button text with extracted ASCII
 
-- `{text:#@e_sysextext#}` - Action that updates the button text:
-  - `#@e_sysextext#` - Special variable that contains the ASCII text extracted from the SysEx message
+### Multiple Message Types
 
-- `[(init){text:Display\nMode}]` - Optional initialization command:
-  - Sets default text when the button is first loaded
-  - `\n` creates a line break in the button text
+To handle different message types on different buttons, use different type codes:
 
-### Expected Behavior
+**Button 1 - Display Mode** (type `01`):
+```javascript
+[
+  (init) {text:Display\nMode}
+  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
+]
+```
 
-When you press the Record button on channel 1 of the Shift page:
-1. The display mode toggles between ON and OFF
-2. A SysEx message is sent to Stream Deck
-3. The Stream Deck button text updates to show:
-   - `Display: ON` when value display mode is active
-   - `Display: OFF` when value display mode is inactive
+**Button 2 - Parameter Info** (type `02`):
+```javascript
+[
+  (init) {text:Parameter}
+  (sysex:F0 7D 02 XX F7) {text:#@e_sysextext#}
+]
+```
 
-## Adding More Stream Deck Buttons
+## Display Mode Toggle Feature
 
-You can extend this pattern to display other Cubase parameters on Stream Deck buttons:
+The MIDI Remote supports toggling between display line configurations per page.
 
-### Generic Pattern
+### How It Works
 
-1. **In MIDI Remote code**: Send SysEx whenever state changes:
+1. Press the **Record button (Channel 1)** on the **Shift Page**
+2. The MIDI Remote displays content in alternate configuration
+3. A SysEx message is sent to Stream Deck with the current mode
+
+### Page Support
+
+| Page | Toggleable |
+|------|-----------|
+| **Mixer** | Yes |
+| **SendsQC** | Yes |
+| **EQ** | Yes |
+| **PreFilter** | Yes |
+| **CueSends** | Yes |
+| **Gate** | Yes |
+| **Compressor** | Yes |
+| **Tools** | Yes |
+| **Saturator** | Yes |
+| **Limiter** | Yes |
+| **Control Room** | No |
+| **MIDI CC** | No |
+| **Shift** | — |
+
+### Setup Display Mode Button
+
+1. **Create Stream Deck Button**:
+   - Search for "MIDI" action
+   - Configure to send CC 127 on Channel 2 with value 127 on press
+
+2. **Add Text Update Script**:
+
+```javascript
+[
+  (init) {text:Lines}
+  (sysex:F0 7D 01 XX F7) {text:#@e_sysextext#}
+]
+```
+
+When you press this button or toggle display mode on the Icon Platform M+, the text will update to show the current mode.
+
+## Sending SysEx from MIDI Remote Code
+
+### Implementation Pattern
+
 ```typescript
-const text = "Your text here";
+// Send SysEx message to Stream Deck
+const text = "Display: ON";
 const textBytes: number[] = [];
 for (let i = 0; i < text.length; i++) {
   textBytes.push(text.charCodeAt(i));
 }
 
 device.sdPortPair.output.sendMidi(context, [
-  0xF0, 0x7D, 0x00, ...textBytes, 0xF7
+  0xF0, 0x7D, 0x01, ...textBytes, 0xF7
 ]);
 ```
 
-2. **In Stream Deck Script**:
-```javascript
-[(sysex:F0 7D 00 XX F7){text:#@e_sysextext#}
-]
-```
+### Message Type Identifiers
 
-### Advanced: Button-Specific Messages
-
-To send different messages to different buttons, use different message type identifiers:
-
-**MIDI Remote** (using message type `01` for a second button):
-```typescript
-device.sdPortPair.output.sendMidi(context, [
-  0xF0, 0x7D, 0x01, ...textBytes, 0xF7  // Note: 0x01 instead of 0x00
-]);
-```
-
-**Stream Deck Script** (listening for message type `01`):
-```javascript
-[(sysex:F0 7D 01 XX F7)  // Note: 01 for display line toggle status
-  {text:#@e_sysextext#}
-]
-```
-
-## Display Line Toggle Button (New Feature)
-
-The MIDI Remote now includes a Stream Deck button to toggle between default and alternate display line configurations per page.
-
-### Display Line Modes
-
-Each page is configured with flexible display line options:
-
-- **Default Mode**: Primary display configuration for the page
-- **Toggle Mode**: Alternate display configuration when the button is active
-
-### Page-Specific Configurations
-
-| Page | Line 0 Default | Line 0 Toggle | Line 1 Default | Toggleable |
-|------|---|---|---|---|
-| **Mixer** | Track Name | Fader Value | Parameter Name | Yes |
-| **Control Room** | Track Name | — | Fader Value | No |
-| **Channel Strip** | None | — | Fader Value | No |
-| **Cue Sends** | Track Name | Fader Value | Parameter Name | Yes |
-| **EQ** | Parameter Name | Encoder Value | Fader Value | Yes |
-| **PreFilter** | Parameter Name | Encoder Value | Fader Value | Yes |
-| **Sends QC** | Track Name | Fader Value | Parameter Name | Yes |
-| **MIDI CC** | (No display) | — | (No display) | No |
-| **Shift** | (Labels only) | — | (Custom) | No |
-
-### Setup Instructions
-
-#### Step 1: Configure Virtual MIDI Ports
-
-Follow the "Port Configuration" section above to set up virtual MIDI ports for Stream Deck communication.
-
-#### Step 2: Create Stream Deck Button
-
-1. In **Stream Deck**, create a new button and set its action to **MIDI**
-2. Configure the MIDI action with:
-   - **Type**: Control Change (CC)
-   - **Channel**: 2 (displayed) / 1 (0-indexed in code)
-   - **Control**: 127
-   - **Value**: 127 (pressed action)
-
-3. Set the button text action to display the current mode:
-   - **Text**: `{text:Display Lines}`
-   - OR add the MIDI SysEx event handler below
-
-#### Step 3: Add Text Display Handler (Optional)
-
-To show the current display line mode on the button, add this Stream Deck MIDI script:
-
-```javascript
-// Stream Deck MIDI Script for Display Line Toggle Button
-[
-  // Listen for sysex messages with manufacturer ID 7D and message type 01
-  (sysex:F0 7D 01 XX F7)
-  {
-    text:{text:#@e_sysextext#}
-  }
-]
-```
-
-This will:
-- Capture SysEx messages from the MIDI Remote (format: `F0 7D 01 <ASCII> F7`)
-- Parse the ASCII text and display it on the button
-- Show "Line: DEF" when in default mode
-- Show "Line: ALT" when in alternate (toggled) mode
-
-#### Step 4: Test the Integration
-
-1. Ensure both Cubase and Stream Deck are running
-2. Verify the virtual MIDI ports are connected
-3. Press the Display Line Toggle button on Stream Deck
-4. Observe:
-   - Display line configuration changes on Icon Platform M+ display
-   - Stream Deck button text updates to show current mode (if script configured)
-
-### Example Workflow
-
-**Mixer Page with Display Toggle**:
-
-1. **Default Mode** (Display Line Toggle OFF):
-   - Line 0 (Top): Track Names (e.g., "Audio 01", "Bass", "Drums")
-   - Line 1 (Bottom): Parameter Names (e.g., "Pan", "Pan", "Pan")
-
-2. **Toggle Mode** (Display Line Toggle ON):
-   - Line 0 (Top): Fader Values (e.g., "-6.0dB", "0.0dB", "+3.0dB")
-   - Line 1 (Bottom): Parameter Names (unchanged)
-
-3. **Use Case**: Show fader values when adjusting levels, then toggle back to track names for overview
-
-### Troubleshooting Display Line Toggle
-
-#### Button doesn't respond
-
-1. Verify CC 127 on channel 2 is not used by other controls
-2. Check that virtual MIDI ports are connected
-3. Monitor MIDI using MIDI-OX or similar tool
-
-#### Display doesn't change
-
-1. Ensure the page supports toggling (check Toggleable column in table above)
-2. Control Room page does NOT support toggling (fixed configuration)
-3. Check that displayLineConfiguration is properly set in page config
-
-#### Text not appearing on button
-
-Follow the "Troubleshooting" section below regarding SysEx messages.
+Reserve these message types for specific purposes:
+- `0x01` - Display mode status
+- `0x02-0x7C` - Available for custom extensions
 
 ## Troubleshooting
 
-### No text appears on Stream Deck button
+### No Text Appears on Stream Deck Button
 
-1. **Check MIDI Port Connections**:
-   - Verify virtual MIDI ports exist and are named correctly
-   - Ensure Stream Deck MIDI Plugin is using the correct ports
-   - Remember: Input/Output are reversed between MIDI Remote and Stream Deck
+1. **Verify MIDI Port Connections**:
+   - Cubase MIDI Remote output → `Platform M+ SD Output` (virtual port)
+   - `Platform M+ SD Input` (virtual port) → Stream Deck MIDI Plugin input
+   - Test with MIDI monitoring tools (MIDI-OX, Patchbay, etc.)
 
-2. **Check Script Syntax**:
-   - Use the Stream Deck plugin's built-in syntax checker
-   - Verify brackets are properly matched: `[ ( ) { } ]`
-   - Check manufacturer ID matches: `7D` in both script and code
+2. **Check Port Names**:
+   - Port names must match exactly (case-sensitive on some systems)
+   - Verify ports appear in both Cubase and Stream Deck
 
-3. **Enable SysEx Debugging**:
-   - In Cubase, check the MIDI Remote Console for errors
-   - Use MIDI monitoring tools (e.g., MIDI-OX on Windows, MIDI Monitor on macOS) to verify SysEx messages are being sent
+3. **Verify Stream Deck Script Syntax**:
+   - Check all brackets match: `[ ( ) { } ]`
+   - Ensure manufacturer ID `7D` matches your code
+   - Test with simple script: `[(init) {text:Test}]`
 
-### Button shows wrong text format
+4. **Enable Debugging**:
+   - In Cubase MIDI Remote Console, enable message logging
+   - Use external MIDI monitor (MIDI-OX, Patchbay, etc.) to see if SysEx is being sent
+   - Watch Stream Deck editor for script parse errors
 
-- Verify `#@e_sysextext#` variable is used in the text action
-- Check that the text being sent from MIDI Remote is properly formatted
-- Try adding `\n` for line breaks: `{text:Line1\nLine2}`
+### Button Receives Messages But Text Doesn't Update
 
-### Messages received but text not updating
+1. Verify SysEx frame format exactly:
+   - Start byte: `F0`
+   - Manufacturer: `7D`
+   - Message type: `01` (or your configured value)
+   - End byte: `F7`
 
-- Ensure the sysex event parameters match exactly
-- Verify manufacturer ID `7D` and message type `00` (or your custom values)
-- Check that the `*` wildcard is used for the data bytes parameter
+2. Check text contains only valid ASCII (32-126, printable):
+   - Avoid special Unicode characters
+   - No extended ASCII or control characters
+
+3. Verify the special variable is correct: `#@e_sysextext#`
+
+4. Check event pattern matches message type:
+   - Button listening for `01` but message sends `00`
+   - Check message type byte in both code and script
+
+### MIDI Port Connection Issues
+
+**Windows (loopMIDI)**:
+- Check that loopMIDI application is running
+- Ports must be created before Cubase starts
+- Restart loopMIDI and Cubase if ports aren't recognized
+- Use MIDI-OX to test port routing
+
+**macOS**:
+- Verify IAC Driver is enabled in Audio MIDI Setup
+- Ports must be created before Cubase starts
+- Restart Core Audio if ports aren't recognized
+- Use MIDI Monitor app to verify connections
+
+**Linux**:
+- Use MIDI routing tools (QJackCtl, Patchbay, Ardour, etc.)
+- Check connections with: `aconnect -l` (ALSA) or `jack_lsp` (JACK)
+
+### Display Mode Not Toggling
+
+1. **Verify Page Supports Toggling**:
+   - Not all pages support display toggle (see support table above)
+   - Control Room and MIDI CC pages have fixed configurations
+
+2. **Check Configuration**:
+   - Ensure `displayLineConfiguration` is set in page config
+   - Verify `toggleable: true` is in the config
+
+3. **Test Toggle Manually**:
+   - Press Record button on Channel 1 of Shift page
+   - Check if display changes on Icon Platform M+
+   - If manual toggle works, check Stream Deck SysEx reception
 
 ## Resources
 
 - [Stream Deck MIDI Plugin Documentation](https://trevligaspel.se/streamdeck/midi/index.php)
 - [Stream Deck MIDI Script Overview](https://trevligaspel.se/streamdeck/midi/index.php/script/overview)
-- [Stream Deck MIDI Forum](https://trevligaspel.forumotion.eu/)
 - [loopMIDI (Windows)](https://www.tobias-erichsen.de/software/loopmidi.html)
+- [MIDI Monitor (macOS)](https://www.snoize.com/MIDIMonitor/)
+- [MIDI-OX (Windows)](https://www.midiox.com/)
+- [QJackCtl (Linux)](https://qjackctl.sourceforge.io/)
 
 ## Example Use Cases
 
-- **Track Names**: Display currently selected track name
-- **Parameter Values**: Show knob/fader values with units
-- **Effect Status**: Display whether effects are bypassed/active
-- **Transport State**: Show play/stop/record status
-- **Tempo**: Display current project tempo
-- **Time Code**: Show current playback position
+By extending the SysEx integration, you can display on Stream Deck:
+
+- **Automation State** - Show automation type and status
+- **Track Status** - Display track mute/solo/record state
+- **Level Information** - Current fader values with units
+- **Effect Status** - Whether effects are ON/OFF or bypassed
+- **Transport Info** - Play/stop/record/loop status
+- **Tempo & Time** - Project tempo and playback position
+- **Meter Levels** - Input/output peak levels (advanced)
+- **Page Indicators** - Current active page name
 
 ## Contributing
 
-If you create useful Stream Deck integrations for this MIDI Remote, please share them in the repository's documentation!
+If you develop useful Stream Deck extensions or additional SysEx-based features, consider contributing them back to the project!

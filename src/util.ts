@@ -91,7 +91,7 @@ export function makeTimerUtils(
     callback: (context: MR_ActiveDevice) => void,
     timeout: number
   ) => {
-    timeouts[timeoutId] = { scheduledExecutionTime: performance.now() + timeout * 1000, callback };
+    timeouts[timeoutId] = { scheduledExecutionTime: performance.now() + timeout * 100, callback };
   };
 
   return { setTimeout };

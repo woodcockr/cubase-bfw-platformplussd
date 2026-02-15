@@ -5,6 +5,12 @@ Install required node packages:
 `npm install`
 
 
+Usage:
+------
+
+See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for a complete guide to all pages, buttons, and faders on the Icon Platform M+.
+
+
 Architecture:
 --------------
 

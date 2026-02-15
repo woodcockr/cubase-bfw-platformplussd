@@ -27,6 +27,7 @@ All interfaces and types for configuration structures.
 const config: BindingConfig = {
   id: "mixer",
   name: "Mixer",
+  description: "Track mixer with volume and pan controls",       // Optional description
   masterButton: "subPageMixer",
   hostAccessor: "hostMixerBankZone",
   bindings: {
@@ -34,6 +35,17 @@ const config: BindingConfig = {
       /* binding definitions */
     ],
     dummyBindings: ["buttons.solo.mSurfaceValue"]
+  },
+  displayBindings: {                                              // Optional - marks which controls are bound
+    knobsBound: true,
+    fadersBound: true
+  },
+  displayLineConfiguration: {                                     // Optional - LCD display settings
+    line0Default: "parameterName",
+    line0Toggle: "encoderValue",
+    line1Default: "trackName",
+    line1Toggle: "faderValue",
+    toggleable: true
   },
   activation: {
     logMessage: "Mixer page activated",
@@ -49,6 +61,8 @@ const config: BindingConfig = {
 ### Host Accessors
 - `"hostMixerBankZone"` - Mixer bank zone for channel strips
 - `"controlRoom"` - Control room mixer
+- `"selectedTrack"` - Selected track with sends and quick controls
+- `"selectedTrackStripEffects"` - Selected track's strip effects
 - `null` - No accessor (use for custom logic)
 
 ### Binding Options
@@ -57,7 +71,9 @@ const config: BindingConfig = {
 {
   takeOverMode: "jump" | "pickup",  // Value pickup behavior
   toggle: boolean,                   // Toggle button behavior
-  customHandler: string              // Custom handler reference
+  customHandler: string,             // Custom handler reference
+  duplicate: boolean,                // Create duplicate binding (Cubase 12.0.60+ workaround)
+  hostValueKey: string               // Alternative host value key (e.g., 'param' for parameter bank zones)
 }
 ```
 
@@ -68,6 +84,19 @@ const config: BindingConfig = {
   start: 0,                          // Start index
   end?: "maxCueSends",              // Dynamic end constraint
   maxValue: "device.numStrips" | 8   // Max value (fixed or dynamic)
+}
+```
+
+### Display Line Configuration Options
+
+```typescript
+{
+  line0Default: string,              // Default display for line 0
+  line0Toggle: string,               // Toggled display for line 0
+  line1Default: string,              // Default display for line 1
+  line1Toggle: string,               // Toggled display for line 1
+  toggleable: boolean,               // Whether this page supports display toggle
+  encoderTitleTransform: function    // Optional function to transform encoder display text
 }
 ```
 
@@ -100,7 +129,49 @@ Create same bindings for all channels:
 }
 ```
 
-### Pattern 2: Fixed Channel Bindings
+### Pattern 2: Multiple Bindings Per Channel (perChannelMulti)
+
+Group multiple related bindings per channel for better organization:
+
+```json
+{
+  "id": "sendsQC",
+  "name": "SendsQC",
+  "bindings": {
+    "perChannelMulti": [
+      {
+        "id": "sendsQCChannelControls",
+        "bindings": [
+          {
+            "surface": "encoder.mEncoderValue",
+            "hostValue": "mSends.getByIndex(i).mLevel"
+          },
+          {
+            "surface": "encoder.mPushValue",
+            "hostValue": "mSends.getByIndex(i).mOn",
+            "options": { "toggle": true }
+          },
+          {
+            "surface": "fader.mSurfaceValue",
+            "hostValue": "mFocusedQuickControls.getByIndex(i)",
+            "options": {
+              "takeOverMode": "jump",
+              "duplicate": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Key Features**:
+- `duplicate: true` - Creates a duplicate binding as a workaround for Cubase 12.0.60+ bugs
+- `hostValueKey: "param"` - Use alternative key for parameter bank zones (e.g., extract 'param' from complex object)
+- Better organization when a single channel has many related controls
+
+### Pattern 3: Fixed Channel Bindings
 
 Specific channels with different bindings:
 
@@ -135,7 +206,42 @@ Specific channels with different bindings:
 }
 ```
 
-### Pattern 3: Variable Range Bindings
+### Pattern 4: Fixed Index Bindings with Commands
+
+Specific channels with command bindings instead of value bindings:
+
+```json
+{
+  "bindings": {
+    "fixedIndexBindings": [
+      {
+        "id": "sendQCCh4SoloCmd",
+        "channelIndex": 4,
+        "surface": "buttons.solo.mSurfaceValue",
+        "command": {
+          "category": "Automation",
+          "action": "Show Used Automation (Selected Tracks)"
+        }
+      },
+      {
+        "id": "sendQCCh6SoloValue",
+        "channelIndex": 6,
+        "surface": "buttons.solo.mSurfaceValue",
+        "hostValue": "mValue.mEditorOpen",
+        "options": { "toggle": true }
+      }
+    ]
+  }
+}
+```
+
+**Key Features**:
+- Mix command bindings and value bindings in same array
+- Useful for handy button functions at specific channel locations
+- `command` object with `category` and `action` triggers Cubase commands
+- `hostValue` creates standard value bindings
+
+### Pattern 5: Variable Range Bindings
 
 Dynamic range with function calls:
 
@@ -145,15 +251,14 @@ Dynamic range with function calls:
     "variableChannels": {
       "range": {
         "start": 0,
-        "end": "maxCueSends",
-        "maxValue": 8
+        "maxValue": "controlRoom.getMaxCueChannels()"
       },
-      "hostValueFactory": "controlRoom.getCueChannelByIndex",
+      "hostValueFactory": "getCueChannelByIndex(i)",
       "bindings": [
         {
           "id": "cueLevel",
           "surface": "encoder.mEncoderValue",
-          "hostValue": "cueSend.mLevelValue"
+          "hostValue": "mLevelValue"
         }
       ]
     }
@@ -161,7 +266,7 @@ Dynamic range with function calls:
 }
 ```
 
-### Pattern 4: Dummy Bindings
+### Pattern 6: Dummy Bindings
 
 Disable unused controls:
 
@@ -185,9 +290,9 @@ Disable unused controls:
 }
 ```
 
-### Pattern 5: Activation Handlers
+### Pattern 7: Activation Handlers
 
-Execute code when subpage activates:
+Execute code when subpage activates with global variables and MIDI output:
 
 ```json
 {
@@ -195,16 +300,28 @@ Execute code when subpage activates:
     "logMessage": "Mixer page activated",
     "globalVariables": [
       { "name": "displayChannelValueName", "value": false },
-      { "name": "displayParameterTitle", "value": false },
       { "name": "refreshDisplay", "action": "toggle" }
     ],
-    "displayBindings": {
-      "knobsBound": true,
-      "fadersBound": true
+    "lcdTextLine0": "Mixer",
+    "midiOutput": {
+      "onActivate": [
+        { "status": 0x90, "data1": 0, "data2": 127 },
+        { "status": 0xB0, "data1": 7, "data2": 100 }
+      ],
+      "onDeactivate": [
+        { "status": 0x90, "data1": 0, "data2": 0 }
+      ]
     }
   }
 }
 ```
+
+**Key Features**:
+- `logMessage` - Logs when page activates
+- `globalVariables` - Set boolean flags or toggle values
+- `lcdTextLine0` - Set custom LCD text on activation
+- `midiOutput` - Send MIDI messages on page activation/deactivation
+- `displayBindings` - Marks which controls are bound (optional)
 
 ## Surface Value Paths
 

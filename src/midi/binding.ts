@@ -142,7 +142,7 @@ export function bindDeviceToMidi(
           const pageId = globalBooleanVariables.currentPageId.get(context);
           device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
         },
-        1
+        5
       );
     };
 
@@ -235,7 +235,7 @@ export function bindDeviceToMidi(
           const pageId = globalBooleanVariables.currentPageId.get(context);
           device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
         },
-        1
+        5
       );
     };
   }

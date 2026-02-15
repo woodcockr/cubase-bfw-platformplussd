@@ -89,21 +89,44 @@ export function makeSubPages(
 
   // If subpage references are provided, set up the special bindings
   if (subpages) {
-    // Bind Select buttons (1-5) to Mixer, Control Room, MIDI CC
+    const selectLabelData = [
+      { page: subpages.mixer, label: 'Mixer' },
+      { page: subpages.controlRoom, label: 'Ctl Rm' },
+      { page: subpages.midiCC, label: 'MIDICC' },
+      { page: subpages.channelStrip[0], label: 'Gate' },
+      { page: subpages.channelStrip[1], label: 'Comp.' },
+      { page: subpages.channelStrip[2], label: 'Tools' },
+      { page: subpages.channelStrip[3], label: 'Sat.' },
+      { page: subpages.channelStrip[4], label: 'Limit.' }
+    ];
+    // Bind Select buttons (1-8) to Mixer, Control Room, MIDI CC, Chstrp 1-4 subpages
     device.channelControls.forEach((channelControl, index) => {
-      const labelData = [
-        { page: subpages.mixer, label: 'Mixer' },
-        { page: subpages.controlRoom, label: 'Ctl Rm' },
-        { page: subpages.midiCC, label: 'MIDICC' },
-        { page: subpages.selectedTrack[0], label: 'SelChl' },
-        { page: subpages.channelStrip[0], label: 'ChStrp' },
-      ];
+
       // Select buttons activate specific pages (cycling through first 3)
-      if (index < labelData.length && labelData[index]) {
+      if (index < selectLabelData.length && selectLabelData[index]) {
         page
           .makeActionBinding(
             channelControl.buttons.select.mSurfaceValue,
-            labelData[index].page.mAction.mActivate
+            selectLabelData[index].page.mAction.mActivate
+          )
+          .setSubPage(subPage);
+      }
+    });
+    //Bind Mute buttons to Selected Track subpages (cycling through first 4)
+    const muteLabelData = [
+      { page: subpages.selectedTrack[0], label: 'EQ' },
+      { page: subpages.selectedTrack[1], label: 'SndsQC' },
+      { page: subpages.selectedTrack[2], label: 'Pre.' },
+      { page: subpages.selectedTrack[3], label: 'Cues' },
+    ];
+    device.channelControls.forEach((channelControl, index) => {
+
+      // Mute buttons activate specific pages (cycling through first 3)
+      if (index < muteLabelData.length && muteLabelData[index]) {
+        page
+          .makeActionBinding(
+            channelControl.buttons.mute.mSurfaceValue,
+            muteLabelData[index].page.mAction.mActivate
           )
           .setSubPage(subPage);
       }
@@ -152,25 +175,32 @@ export function makeSubPages(
       }
 
       // Set LCD labels for the Shift page
-      const labelData = [
-        { label: 'Mixer' },
-        { label: 'Ctl Rm' },
-        { label: 'MIDICC' },
-        { label: 'SelChl' },
-        { label: 'ChStrp' },
-      ];
-
-      for (var i = 0; i < labelData.length; i++) {
-        var data = labelData[i];
+      for (var i = 0; i < selectLabelData.length; i++) {
+        var data = selectLabelData[i];
         var formattedLabel = formatLabel(data.label);
         device.lcdManager.setChannelText(activeDevice, 1, i, formattedLabel);
-        device.lcdManager.setChannelText(activeDevice, 0, i, '');
       }
+      for (var j = 0; j < muteLabelData.length; j++) {
+        var data = muteLabelData[j];
+        var formattedLabel = formatLabel(data.label);
+        device.lcdManager.setChannelText(activeDevice, 0, j, formattedLabel);
+      };
     };
-  };
 
-  // Note: The masterButton 'subPageShift' will automatically be bound to activate this subpage
-  // The Mixer button binding to activate Shift is handled in the main file
+    // Note: The masterButton 'subPageShift' will automatically be bound to activate this subpage
+    // The Mixer button binding to activate Shift is handled in the main file
 
-  return subPage;
+    // Deactivation handler to clear display
+    subPage.mOnDeactivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
+      console.log('from script: Platform M+ page "Shift" deactivated')
+
+      // Clear channel text rows
+      for (let i = 0; i < device.numStrips; ++i) {
+        device.lcdManager.setChannelText(activeDevice, 1, i, '      ')  // 6 spaces
+        device.lcdManager.setChannelText(activeDevice, 0, i, '      ')  // 6 spaces
+      }
+    }
+
+    return subPage;
+  }
 }
