@@ -36,7 +36,6 @@ export interface PageDisplayState {
   areFadersBound: boolean;
   areKnobsBound: boolean;
   areDisplayRowsFlipped: boolean;
-  isValueDisplayModeActive: boolean;
 
   // Display line configuration for this page
   displayLineConfiguration?: DisplayLineConfiguration;
@@ -98,7 +97,17 @@ export class DisplayStateManager {
   // Flag to suppress refreshes during page activation
   private isActivatingPage: boolean = false;
 
+  // Reference to global boolean variables (set after construction)
+  private globalBooleanVariables: any; // GlobalBooleanVariables
+
   constructor(private lcdManager: LcdManager) { }
+
+  /**
+   * Set reference to global boolean variables for direct access
+   */
+  setGlobalBooleanVariables(globalBooleanVariables: any): void {
+    this.globalBooleanVariables = globalBooleanVariables;
+  }
 
   /**
    * Initialize a new page with default state
@@ -110,7 +119,6 @@ export class DisplayStateManager {
         areFadersBound: false,
         areKnobsBound: false,
         areDisplayRowsFlipped: false,
-        isValueDisplayModeActive: false,
         channels: new Map(),
         localValueModeActive: new Map(),
       });
@@ -201,15 +209,35 @@ export class DisplayStateManager {
 
     const row = this.getRowForControl(state, control);
     const isLocalValueMode = state.localValueModeActive.get(channelIndex) || false;
-    const isGlobalValueMode = state.isValueDisplayModeActive;
+    const isGlobalValueMode = this.globalBooleanVariables?.isValueDisplayModeActive?.get(context) || false;
     let displayText = '';
 
     if (isLocalValueMode || isGlobalValueMode) {
-      displayText = this.abbreviateAndCenter(
-        control === 'encoder'
-          ? channelData.encoder.displayValue
-          : channelData.fader.displayValue
-      );
+      // displayText = this.abbreviateAndCenter(
+      //   control === 'encoder'
+      //     ? channelData.encoder.displayValue
+      //     : channelData.fader.displayValue
+      // );
+      if (control === 'encoder') {
+        displayText = this.abbreviateAndCenter(channelData.encoder.displayValue);
+      } else {
+        const faderValue = channelData.fader.displayValue;
+        if (faderValue && faderValue.trim().length > 0) {
+          displayText = this.abbreviateAndCenter(faderValue);
+        } else {
+          // Fallback to track title/value title when value cache is empty
+          const fallback = state.displayLineConfiguration
+            ? this.getDisplayTextForLine(
+                context,
+                1,
+                channelData,
+                state.displayLineConfiguration,
+                this.displayLineToggleActive
+              )
+            : channelData.fader.title || channelData.fader.valueTitle;
+          displayText = this.abbreviateAndCenter(fallback || '');
+        }
+      }
     } else if (state.displayLineConfiguration) {
       displayText = this.getDisplayTextForLine(
         context,

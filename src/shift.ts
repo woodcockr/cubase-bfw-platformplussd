@@ -62,7 +62,7 @@ export function makeSubPages(
       // Send display mode status to Stream Deck via sysex
       // See STREAMDECK_INTEGRATION.md for Stream Deck button configuration
       const isActive = globalBooleanVariables.isValueDisplayModeActive.get(context);
-      const displayText = isActive ? "Display: ON" : "Display: OFF";
+      const displayText = isActive ? "Value\nDisplay\nON" : "Value\nDisplay\nOFF";
 
       // Convert text to ASCII bytes for sysex message
       const textBytes: number[] = [];

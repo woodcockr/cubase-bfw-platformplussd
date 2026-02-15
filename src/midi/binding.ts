@@ -240,14 +240,10 @@ export function bindDeviceToMidi(
     };
   }
 
-  // Add global callbacks for display setting changes
-  globalBooleanVariables.isValueDisplayModeActive.addOnChangeCallback((context, value) => {
-    const pageId = globalBooleanVariables.currentPageId.get(context);
-    device.displayStateManager.updatePageSettings(context, pageId, {
-      isValueDisplayModeActive: value,
-    });
-  });
+  // Pass global variables to DisplayStateManager so it can read directly
+  device.displayStateManager.setGlobalBooleanVariables(globalBooleanVariables);
 
+  // Add global callbacks for display setting changes
   globalBooleanVariables.areDisplayRowsFlipped.addOnChangeCallback((context, value) => {
     const pageId = globalBooleanVariables.currentPageId.get(context);
     device.displayStateManager.updatePageSettings(context, pageId, {
