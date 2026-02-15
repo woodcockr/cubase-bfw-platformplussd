@@ -3,41 +3,50 @@ import { GlobalBooleanVariables } from "./midi/binding";
 import { ActivationCallbacks } from "./midi/connection"
 
 // Mappings for the default areas - transport, zoom, knob
-export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks ) : MR_FactoryMappingPage{
+export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, _globalBooleanVariables: GlobalBooleanVariables, _activationCallbacks: ActivationCallbacks ) : MR_FactoryMappingPage{
   var page = deviceDriver.mMapping.makePage(name)
 
   var jogSubPageArea = page.makeSubPageArea('Jog')
   var zoomSubPageArea = page.makeSubPageArea('Zoom')
 
   var subPageJogNudge = jogSubPageArea.makeSubPage('Nudge')
-  subPageJogNudge.mOnActivate = (activeDevice) => {
-    // console.log('Nudge activated')
+  subPageJogNudge.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Nudge mode indicator on LCD (position 55 - Indicator2Text)
     device.lcdManager.setIndicator2Text(activeDevice, 'N')
   }
 
   var subPageJogScrub = jogSubPageArea.makeSubPage('Scrub')
-  subPageJogScrub.mOnActivate = (activeDevice) => {
-    // console.log('Scrub activated')
+  subPageJogScrub.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Scrub mode indicator on LCD (position 55 - Indicator2Text)
     device.lcdManager.setIndicator2Text(activeDevice, 'S')
   }
 
   var subPageJogZoom = zoomSubPageArea.makeSubPage('Zoom')
-  // subPageJogZoom.mOnActivate = (activeDevice)  => {
-  //   // Need a way to manage the lack of ability to know this has turned off. Can the message be SENT to the Icon to esnure mode is correct?
-  //   // console.log('Zoom activated')
-  //   // device.lcdManager.setIndicator1Text(activeDevice, ' ')
-  // }
+  subPageJogZoom.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Zoom mode indicator on LCD (position 111 - Indicator1Text)
+    device.lcdManager.setIndicator1Text(activeDevice, 'Z')
+  }
+  subPageJogZoom.mOnDeactivate = (activeDevice: MR_ActiveDevice) => {
+    // When leaving Zoom mode, clear the Z indicator (unless Nav is taking over)
+    // Note: Nav's mOnActivate will immediately follow and set 'N', so this creates
+    // a momentary blank state that prevents stale 'Z' from persisting
+    device.lcdManager.setIndicator1Text(activeDevice, ' ')
+  }
 
   var subPageJobNav = zoomSubPageArea.makeSubPage('Nav')
-  // subPageJobNav.mOnActivate = (activeDevice) => {
-  //   // See Zoom comment
-  //   // console.log('Nav activated')
-  //   // device.lcdManager.setIndicator1Text(activeDevice, 'N')
-  // }
+  subPageJobNav.mOnActivate = (activeDevice: MR_ActiveDevice) => {
+    // Show Nav mode indicator on LCD (position 111 - Indicator1Text)
+    device.lcdManager.setIndicator1Text(activeDevice, 'N')
+  }
+  subPageJobNav.mOnDeactivate = (activeDevice: MR_ActiveDevice) => {
+    // When leaving Nav mode, clear the N indicator
+    device.lcdManager.setIndicator1Text(activeDevice, ' ')
+  }
 
   // Transport controls
-  page.makeActionBinding(device.transport.buttons.prevChn.mSurfaceValue, deviceDriver.mAction.mPrevPage)
-  page.makeActionBinding(device.transport.buttons.nextChn.mSurfaceValue, deviceDriver.mAction.mNextPage)
+  // TODO PreChn and nextChn could be other commands
+  page.makeCommandBinding(device.transport.buttons.prevChn.mSurfaceValue, 'Transport', 'Locate Previous Event')
+  page.makeCommandBinding(device.transport.buttons.nextChn.mSurfaceValue, 'Transport', 'Locate Next Event')
   page.makeCommandBinding(device.transport.buttons.prevBnk.mSurfaceValue, 'Transport', 'Locate Previous Marker')
   page.makeCommandBinding(device.transport.buttons.nextBnk.mSurfaceValue, 'Transport', 'Locate Next Marker')
   page.makeValueBinding(device.transport.buttons.forward.mSurfaceValue, page.mHostAccess.mTransport.mValue.mForward)
@@ -83,16 +92,7 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   page.makeValueBinding(device.master.buttons.read.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
   page.makeValueBinding(device.master.buttons.write.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
 
-  // Mixer Button
-  page
-    .makeValueBinding(
-      device.master.buttons.mixer.mSurfaceValue,
-      page.mCustom.makeHostValueVariable("Display Name/Value")
-    )
-    .mOnValueChange = (context, mapping, value) => {
-    if (value) {
-      globalBooleanVariables.isValueDisplayModeActive.toggle(context);
-    }
-  };
+  // Mixer Button binding will be set up in main file to activate Shift page
+
   return page
 }

@@ -6,26 +6,27 @@ import "core-js/actual/array/flat-map";
 import "core-js/actual/string/pad-start";
 import "core-js/actual/string/replace-all";
 import "core-js/actual/object/entries";
+import "core-js/actual/object/values";
 import "core-js/actual/reflect/construct";
+import "core-js/actual/map";
 
 // @ts-ignore Workaround because the core-js polyfill doesn't play nice with SWC:
 Reflect.get = undefined;
 
 import midiremote_api from "midiremote_api_v1";
 import { decoratePage } from "./decorators/page";
-import { decorateSurface, DecoratedDeviceSurface } from "./decorators/surface";
-import { makePortPair } from "./midi/PortPair";
+import { decorateSurface } from "./decorators/surface";
 import { setupDeviceConnection } from "./midi/connection"
 import { makeTimerUtils } from "./util";
 import { createGlobalBooleanVariables, bindDeviceToMidi } from "./midi/binding"
-import { IconPlatformMplus, ChannelSurfaceElements, makeChannelControls, makeMasterControl, makeTransport } from "./icon_elements";
+import { IconPlatformMplus } from "./icon_elements";
 import { makePageWithDefaults } from "./master_controls"
-import { setTextOfColumn, setTextOfLine, makeLabel } from "./helper"
 import * as mixer from "./mixer"
 import * as control_room from "./control_room"
 import * as midi from "./midi"
 import * as selected_track from "./selected_track"
 import * as channel_strip from "./channel_strip"
+import * as shift from "./shift"
 
 
 // create the device driver main object
@@ -50,11 +51,34 @@ activationCallbacks.addCallback((context) => {
   globalBooleanVariables.areMotorsActive.set(context, true);
 });
 
-var mixerPage = decoratePage(mixer.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var selectedTrackPage = decoratePage(selected_track.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var channelStripPage = decoratePage(channel_strip.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var controlRoomPage = decoratePage(control_room.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-var midiPage = decoratePage(midi.makePage(device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
-const timerUtils = makeTimerUtils(deviceDriver, mixerPage, surface, isAPIVersion1_1);
+var page = decoratePage(makePageWithDefaults('Main', device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
+// Dummy variable for unused controls in subpages
+const dummy = page.mCustom.makeHostValueVariable("null");
+var faderSubPageArea = page.makeSubPageArea('MixerArea')
+const mixerSubPage = mixer.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const selectedTrackSubPages = selected_track.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const channelStripSubPages = channel_strip.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const controlRoomSubPage = control_room.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const midiCCSubPage = midi.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy)
+const shiftSubPage = shift.makeSubPages(page, faderSubPageArea, device, globalBooleanVariables, dummy, {
+  mixer: mixerSubPage,
+  selectedTrack: selectedTrackSubPages,
+  channelStrip: channelStripSubPages,
+  controlRoom: controlRoomSubPage,
+  midiCC: midiCCSubPage
+})
+
+// Bind the physical Mixer button to activate the Shift page
+page.makeActionBinding(device.master.buttons.mixer.mSurfaceValue, shiftSubPage.mAction.mActivate)
+const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);
+
+// Initialize LCD indicators after all subpages are set up
+// This ensures the default indicators are set and will persist
+activationCallbacks.addCallback((context) => {
+  // Set default indicators: Zoom mode (Z) and Nudge mode (N)
+  // These will be tracked in LcdManager and restored after display updates
+  device.lcdManager.setIndicator1Text(context, 'Z');
+  device.lcdManager.setIndicator2Text(context, 'N');
+});

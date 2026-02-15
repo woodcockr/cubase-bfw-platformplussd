@@ -1,55 +1,156 @@
-import { makePageWithDefaults } from "./master_controls"
+/**
+ * MIDI CC subpage - Using BindingCreator with custom handlers
+ *
+ * This module uses BindingCreator for structure with custom handlers:
+ * - Faders send MIDI CC messages
+ * - Encoders change the CC number (0-127)
+ * - Display shows CC title and current CC number
+ *
+ * Refactored approach:
+ * - Uses MIDI_CONFIG for binding structure
+ * - Custom fader handlers for MIDI output
+ * - Custom encoder handlers for CC number selection
+ * - Custom activation for LCD initialization showing CC numbers
+ */
+
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
-import { ActivationCallbacks } from "./midi/connection"
-import { LcdManager } from "./midi/LcdManager";
+import { LcdManager } from "./midi/LcdManager"
+import { midi_cc } from "./config"
+import { DecoratedFactoryMappingPage } from "./decorators/page"
+import { BindingCreator } from "./config/bindingCreator"
+import { MIDI_CONFIG } from "./config/subpages/midi.config"
 
-import { midi_cc } from "./config";
+export function makeSubPages(
+  page: DecoratedFactoryMappingPage,
+  faderSubPageArea: any, // MR_SubPageArea
+  device: IconPlatformMplus,
+  globalBooleanVariables: GlobalBooleanVariables,
+  dummy: any // MR_HostValueVariable
+) {
+  const creator = new BindingCreator(page, device, dummy, globalBooleanVariables)
 
-export function makePage(device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, globalBooleanVariables: GlobalBooleanVariables, activationCallbacks: ActivationCallbacks) {
-  var page = makePageWithDefaults('Midi', device, deviceDriver, globalBooleanVariables, activationCallbacks)
+  // Store current CC numbers for each channel (initialized from config.ts defaults)
+  const currentCCNumbers: number[] = midi_cc.map(cc => cc.cc)
 
-  function makeMidiCCBinding(page: MR_FactoryMappingPage, displayName: string, cc: number, fader: number) {
-    // ? I have no idea what page.mCustom.makeHostValueVariable actually does- all I know is I can make a value binding this way. I can't seem to be able to look it up
-    // ? or access it all once made.
-    page.makeValueBinding(device.channelControls[fader].fader.mSurfaceValue, page.mCustom.makeHostValueVariable(displayName)).setValueTakeOverModeJump()
-      .mOnValueChange = (activeDevice: MR_ActiveDevice, mapping: any, value: number, value2: any) => {
-        var ccValue = Math.ceil(value * 127)
-        var pitchBendValue = Math.ceil(value * 16383)
-        var val1 = pitchBendValue % 128
-        var val2 = Math.floor(pitchBendValue / 128)
+  // Create custom config
+  const customConfig = { ...MIDI_CONFIG }
+  const faderBindings: any[] = []
+  const encoderBindings: any[] = []
 
-        // this is the value going back to the icon Fader
-        device.channelControls[fader].fader.mSurfaceValue.setProcessValue(activeDevice, value);
-        // this is the value going back to Cubendo - only send if touched
-        if (device.channelControls[fader].fader.mTouchedValue.getProcessValue(activeDevice) === 1) {
-          device.ccPortPair.output.sendMidi(activeDevice, [0xB0, cc, ccValue])
-        }
-        // Update display
-        device.lcdManager.setChannelText(activeDevice, 1, fader, displayName);
-        device.lcdManager.setChannelText(activeDevice, 0, fader, ccValue.toString());
-      }
-  }
-
-  for (var i = 0; i < device.numStrips; ++i) {
-    let name = LcdManager.centerString(
-      LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(midi_cc[i].title))
+  // Create per-channel fader and encoder bindings
+  for (let i = 0; i < device.numStrips; ++i) {
+    const ccConfig = midi_cc[i]
+    const displayName = LcdManager.centerString(
+      LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(ccConfig.title))
     )
-    makeMidiCCBinding(page, name, midi_cc[i].cc, i)
+
+    // Create custom host variable for fader
+    const hostVariable = page.mCustom.makeHostValueVariable(displayName)
+
+    // Create fader binding with custom handler for MIDI output
+    const valueBinding = page
+      .makeValueBinding(
+        device.channelControls[i].fader.mSurfaceValue,
+        hostVariable
+      )
+      .setValueTakeOverModeJump()
+
+    // Fader handler: send MIDI CC using current CC number
+    valueBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, _mapping: any, value: number) => {
+      const ccValue = Math.ceil(value * 127)
+
+      // Send back to icon fader
+      device.channelControls[i].fader.mSurfaceValue.setProcessValue(activeDevice, value)
+
+      // Send MIDI CC only if fader is touched
+      if (device.channelControls[i].fader.mTouchedValue.getProcessValue(activeDevice) === 1) {
+        device.ccPortPair.output.sendMidi(activeDevice, [0xb0, currentCCNumbers[i], ccValue])
+      }
+
+      // Update display: CC number on row 1, value on row 0
+      const ccDisplay = `CC${currentCCNumbers[i].toString().padStart(3, ' ')}`
+      device.lcdManager.setChannelText(activeDevice, 1, i, ccDisplay)
+      device.lcdManager.setChannelText(activeDevice, 0, i, ccValue.toString())
+    }
+
+    faderBindings.push(valueBinding)
+
+    // Create encoder binding for CC number selection
+    const encoderHostVariable = page.mCustom.makeHostValueVariable(`CC${i}`)
+    const encoderBinding = page.makeValueBinding(
+      device.channelControls[i].encoder.mEncoderValue,
+      encoderHostVariable
+    )
+
+    // Encoder handler: use raw absolute value (0-127) from encoder
+    encoderBinding.mOnValueChange = (activeDevice: MR_ActiveDevice, _mapping: any, value: number) => {
+      if (!globalBooleanVariables.isMidiCcPageActive.get(activeDevice)) {
+        return;
+      }
+
+      const raw = Math.round(value * 127);
+      currentCCNumbers[i] = Math.max(0, Math.min(127, raw))
+
+      // Update display to show current CC number
+      const ccDisplay = `CC${currentCCNumbers[i].toString().padStart(3, ' ')}`
+      device.lcdManager.setChannelText(activeDevice, 1, i, ccDisplay)
+
+      // Show current fader value on row 0
+      const faderValue = device.channelControls[i].fader.mSurfaceValue.getProcessValue(activeDevice)
+      const ccValue = Math.ceil(faderValue * 127)
+      device.lcdManager.setChannelText(activeDevice, 0, i, ccValue.toString())
+    }
+
+    encoderBindings.push(encoderBinding)
   }
 
-  page.mOnActivate = (context: MR_ActiveDevice) => {
-    // console.log('from script: Platform M+ page "Midi" activated')
+  // Create subpage using config (handles dummy bindings and structure)
+  const subPageMIDICC = creator.createSubPageBindings(customConfig, faderSubPageArea)
 
-    // This fails on activate due to overwrite from faders! thankfully the valueBinding doesn't. Looks like the scribble strip updates when the faders are deactivated occur
-    // after the mOnActivate call thus wiping this out.
-    for (var i = 0; i < device.numStrips; ++i) {
-      let name = LcdManager.centerString(
-        LcdManager.abbreviateString(LcdManager.stripNonAsciiCharacters(midi_cc[i].title))
-      )
-      device.lcdManager.setChannelText(context, 1, i, name);
-      device.lcdManager.setChannelText(context, 0, i, "?");
+  // Set subpage for all fader and encoder bindings
+  faderBindings.forEach(binding => binding.setSubPage(subPageMIDICC))
+  encoderBindings.forEach(binding => binding.setSubPage(subPageMIDICC))
+
+  // Override activation handler for LCD initialization
+  subPageMIDICC.mOnActivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
+    // Set current page ID in global state
+    const pageId = 'midicc';
+    globalBooleanVariables.currentPageId.set(activeDevice, pageId);
+
+    // Initialize page in DisplayStateManager and set as active
+    device.displayStateManager.initializePage(pageId);
+    device.displayStateManager.setActivePage(activeDevice, pageId);
+
+    console.log('from script: Platform M+ page "Midi" activated')
+
+    globalBooleanVariables.isMidiCcPageActive.set(activeDevice, true);
+
+    // Initialize LCD displays with CC numbers
+    for (let i = 0; i < device.numStrips; ++i) {
+      const ccDisplay = `CC${currentCCNumbers[i].toString().padStart(3, ' ')}`
+      device.lcdManager.setChannelText(activeDevice, 1, i, ccDisplay)
+      const faderValue = device.channelControls[i].fader.mSurfaceValue.getProcessValue(activeDevice)
+      const ccValue = Math.ceil(faderValue * 127)
+      device.lcdManager.setChannelText(activeDevice, 0, i, ccValue.toString())
+    }
+
+    // Restore indicators after LCD updates
+    device.lcdManager.restoreCurrentIndicators(activeDevice)
+  }
+
+  // Deactivation handler to clear display
+  subPageMIDICC.mOnDeactivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
+    console.log('from script: Platform M+ page "Midi" deactivated')
+
+    globalBooleanVariables.isMidiCcPageActive.set(activeDevice, false);
+
+    // Clear channel text rows
+    for (let i = 0; i < device.numStrips; ++i) {
+      device.lcdManager.setChannelText(activeDevice, 1, i, '      ')  // 6 spaces
+      device.lcdManager.setChannelText(activeDevice, 0, i, '      ')  // 6 spaces
     }
   }
-  return page
+
+  return subPageMIDICC;
 }

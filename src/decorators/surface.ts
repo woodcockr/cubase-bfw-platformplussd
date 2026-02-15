@@ -103,7 +103,7 @@ export function decorateSurface(surface: MR_DeviceSurface) {
         .setInputPort(input)
         .bindToControlChange(0, controlChangeNumber)
         .setTypeAbsolute();
-      mProxyValue.mOnProcessValueChange = (context, value, difference) => {
+      mProxyValue.mOnProcessValueChange = (context, value, _difference) => {
         if (value < 0.5) {
           var jump_rate = Math.floor(value * 127)
           jogWheel.mJogRightValue.setProcessValue(context, jump_rate);
