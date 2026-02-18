@@ -44,9 +44,8 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   }
 
   // Transport controls
-  // TODO PreChn and nextChn could be other commands
-  page.makeCommandBinding(device.transport.buttons.prevChn.mSurfaceValue, 'Transport', 'Locate Previous Event')
-  page.makeCommandBinding(device.transport.buttons.nextChn.mSurfaceValue, 'Transport', 'Locate Next Event')
+  page.makeCommandBinding(device.transport.buttons.prevChn.mSurfaceValue, "Edit", "Unmute All")
+  page.makeCommandBinding(device.transport.buttons.nextChn.mSurfaceValue, "Edit", "Deactivate All Solo")
   page.makeCommandBinding(device.transport.buttons.prevBnk.mSurfaceValue, 'Transport', 'Locate Previous Marker')
   page.makeCommandBinding(device.transport.buttons.nextBnk.mSurfaceValue, 'Transport', 'Locate Next Marker')
   page.makeValueBinding(device.transport.buttons.forward.mSurfaceValue, page.mHostAccess.mTransport.mValue.mForward)
@@ -93,6 +92,10 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   page.makeValueBinding(device.master.buttons.write.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
 
   // Mixer Button binding will be set up in main file to activate Shift page
+
+  // SD button bingings
+  page.makeCommandBinding(device.master.sd_buttons.unmuteAll.mSurfaceValue, "Edit", "Unmute All")
+  page.makeCommandBinding(device.master.sd_buttons.deactivateAllSolo.mSurfaceValue, "Edit", "Deactivate All Solo")
 
   return page
 }

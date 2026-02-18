@@ -36,11 +36,11 @@ export function makeSubPages(
   }
 
   // Stream Deck controls for page switching
-  page.makeActionBinding(device.master.buttons.subPageGate.mSurfaceValue, subpages.gate.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageCompressor.mSurfaceValue, subpages.compressor.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageTools.mSurfaceValue, subpages.tools.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageSaturator.mSurfaceValue, subpages.saturator.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageLimiter.mSurfaceValue, subpages.limiter.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageGate.mSurfaceValue, subpages.gate.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageCompressor.mSurfaceValue, subpages.compressor.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageTools.mSurfaceValue, subpages.tools.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageSaturator.mSurfaceValue, subpages.saturator.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageLimiter.mSurfaceValue, subpages.limiter.mAction.mActivate)
 
   // Return array of subpages for shift page bindings
   return [subpages.gate, subpages.compressor, subpages.tools, subpages.saturator, subpages.limiter];

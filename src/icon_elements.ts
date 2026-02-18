@@ -79,6 +79,8 @@ export interface MasterControl {
     mixer: LedButton,
     read: LedButton,
     write: LedButton,
+  },
+  sd_buttons: {
     // Additional buttons for Stream Deck functionality
     subPageMixer: LedButton,
     subPageControlRoom: LedButton,
@@ -93,6 +95,8 @@ export interface MasterControl {
     subPageSaturator: LedButton,
     subPageLimiter: LedButton,
     subPageShift: LedButton,
+    deactivateAllSolo: LedButton,
+    unmuteAll: LedButton,
   }
 }
 
@@ -133,10 +137,13 @@ export function makeMasterControl(surface: DecoratedDeviceSurface, x: number, y:
       mixer: surface.makeLedButton(fader_x + 3, fader_y + 6, 3, 3),
       read: surface.makeLedButton(fader_x + 3, fader_y + 9, 3, 3),
       write: surface.makeLedButton(fader_x + 3, fader_y + 12, 3, 3),
+    },
+    sd_buttons: {
       // Additional buttons for Stream Deck functionality
       subPageMixer: surface.makeLedButton(sd_button_x, sd_button_y, 3, 3),
       subPageControlRoom: surface.makeLedButton(sd_button_x + 3, sd_button_y, 3, 3),
       subPageMIDICC: surface.makeLedButton(sd_button_x + 6, sd_button_y, 3, 3),
+      subPageShift: surface.makeLedButton(sd_button_x + 9, sd_button_y, 3, 3),
       // EQ/Sends/PreFilter/CueSends
       subPageEQ: surface.makeLedButton(sd_button_x, sd_button_y + 3, 3, 3),
       subPageSendsQC: surface.makeLedButton(sd_button_x + 3, sd_button_y + 3, 3, 3),
@@ -148,7 +155,9 @@ export function makeMasterControl(surface: DecoratedDeviceSurface, x: number, y:
       subPageTools: surface.makeLedButton(sd_button_x + 6, sd_button_y + 6, 3, 3),
       subPageSaturator: surface.makeLedButton(sd_button_x + 9, sd_button_y + 6, 3, 3),
       subPageLimiter: surface.makeLedButton(sd_button_x + 12, sd_button_y + 6, 3, 3),
-      subPageShift: surface.makeLedButton(sd_button_x + 9, sd_button_y, 3, 3),
+      // Other functions
+      deactivateAllSolo: surface.makeLedButton(sd_button_x + 6, sd_button_y + 9, 3, 3),
+      unmuteAll: surface.makeLedButton(sd_button_x + 3, sd_button_y + 9, 3, 3),
     },
     fader: surface.makeTouchSensitiveFader(fader_x, fader_y, 3, 18),
   }

@@ -39,10 +39,10 @@ export function makeSubPages(
   }
 
   // Stream Deck controls
-  page.makeActionBinding(device.master.buttons.subPageEQ.mSurfaceValue, subpages.eq.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageSendsQC.mSurfaceValue, subpages.sendsQC.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPagePreFilter.mSurfaceValue, subpages.preFilter.mAction.mActivate)
-  page.makeActionBinding(device.master.buttons.subPageCueSends.mSurfaceValue, subpages.cueSends.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageEQ.mSurfaceValue, subpages.eq.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageSendsQC.mSurfaceValue, subpages.sendsQC.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPagePreFilter.mSurfaceValue, subpages.preFilter.mAction.mActivate)
+  page.makeActionBinding(device.master.sd_buttons.subPageCueSends.mSurfaceValue, subpages.cueSends.mAction.mActivate)
 
   // Return array of subpages for shift page bindings
   return [subpages.sendsQC, subpages.eq, subpages.preFilter, subpages.cueSends];

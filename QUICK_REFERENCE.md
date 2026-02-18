@@ -12,6 +12,30 @@ The Icon Platform M+ has:
 
 ---
 
+## Master/Transport Controls (Global)
+
+**Transport Buttons**:
+| Control | Function |
+|---------|----------|
+| Prev Chn | Unmute All |
+| Next Chn | Deactivate All Solo |
+| Prev Bnk | Locate Previous Marker |
+| Next Bnk | Locate Next Marker |
+| Rewind | Rewind |
+| Forward | Fast Forward |
+| Start | Play |
+| Stop | Stop |
+| Record | Record |
+| Cycle | Loop On/Off |
+
+**Stream Deck (SD) Buttons**:
+| Control | Function |
+|---------|----------|
+| Unmute All | Unmute All |
+| Deactivate All Solo | Deactivate All Solo |
+
+---
+
 ## Page Reference
 
 ### 1. MIXER PAGE

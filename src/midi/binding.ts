@@ -142,7 +142,7 @@ export function bindDeviceToMidi(
           const pageId = globalBooleanVariables.currentPageId.get(context);
           device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
         },
-        5
+        7
       );
     };
 
@@ -235,7 +235,7 @@ export function bindDeviceToMidi(
           const pageId = globalBooleanVariables.currentPageId.get(context);
           device.displayStateManager.clearLocalValueMode(context, pageId, channelIndex);
         },
-        5
+        7
       );
     };
   }
@@ -303,19 +303,21 @@ export function bindDeviceToMidi(
   master.buttons.read.bindToNote(ports, 74);
   master.buttons.write.bindToNote(ports, 75);
   // SD buttons
-  master.buttons.subPageMixer.bindToNote(sd_ports, 0);
-  master.buttons.subPageEQ.bindToNote(sd_ports, 1);
-  master.buttons.subPageSendsQC.bindToNote(sd_ports, 2);
-  master.buttons.subPagePreFilter.bindToNote(sd_ports, 3);
-  master.buttons.subPageCueSends.bindToNote(sd_ports, 4);
-  master.buttons.subPageGate.bindToNote(sd_ports, 5);
-  master.buttons.subPageCompressor.bindToNote(sd_ports, 6);
-  master.buttons.subPageTools.bindToNote(sd_ports, 7);
-  master.buttons.subPageSaturator.bindToNote(sd_ports, 8);
-  master.buttons.subPageLimiter.bindToNote(sd_ports, 9);
-  master.buttons.subPageControlRoom.bindToNote(sd_ports, 10);
-  master.buttons.subPageMIDICC.bindToNote(sd_ports, 11);
-  master.buttons.subPageShift.bindToNote(sd_ports, 12);
+  master.sd_buttons.subPageMixer.bindToNote(sd_ports, 0);
+  master.sd_buttons.subPageEQ.bindToNote(sd_ports, 1);
+  master.sd_buttons.subPageSendsQC.bindToNote(sd_ports, 2);
+  master.sd_buttons.subPagePreFilter.bindToNote(sd_ports, 3);
+  master.sd_buttons.subPageCueSends.bindToNote(sd_ports, 4);
+  master.sd_buttons.subPageGate.bindToNote(sd_ports, 5);
+  master.sd_buttons.subPageCompressor.bindToNote(sd_ports, 6);
+  master.sd_buttons.subPageTools.bindToNote(sd_ports, 7);
+  master.sd_buttons.subPageSaturator.bindToNote(sd_ports, 8);
+  master.sd_buttons.subPageLimiter.bindToNote(sd_ports, 9);
+  master.sd_buttons.subPageControlRoom.bindToNote(sd_ports, 10);
+  master.sd_buttons.subPageMIDICC.bindToNote(sd_ports, 11);
+  master.sd_buttons.subPageShift.bindToNote(sd_ports, 12);
+  master.sd_buttons.deactivateAllSolo.bindToNote(sd_ports, 13);
+  master.sd_buttons.unmuteAll.bindToNote(sd_ports, 14);
 
   // Transport Section
   const transport = device.transport;
