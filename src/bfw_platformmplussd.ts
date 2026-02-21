@@ -74,6 +74,12 @@ const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
 
 bindDeviceToMidi(device, globalBooleanVariables, activationCallbacks, timerUtils);
 
+  // Stream Deck controls
+page.makeActionBinding(device.master.sd_buttons.subPageMixer.mSurfaceValue, mixerSubPage.mAction.mActivate)
+page.makeActionBinding(device.master.sd_buttons.subPageControlRoom.mSurfaceValue, controlRoomSubPage.mAction.mActivate)
+page.makeActionBinding(device.master.sd_buttons.subPageMIDICC.mSurfaceValue, midiCCSubPage.mAction.mActivate)
+page.makeActionBinding(device.master.sd_buttons.subPageShift.mSurfaceValue, shiftSubPage.mAction.mActivate)
+
 // Initialize LCD indicators after all subpages are set up
 // This ensures the default indicators are set and will persist
 activationCallbacks.addCallback((context) => {

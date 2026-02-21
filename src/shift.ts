@@ -201,6 +201,6 @@ export function makeSubPages(
       }
     }
 
-    return subPage;
   }
+  return subPage;
 }
