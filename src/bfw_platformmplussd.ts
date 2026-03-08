@@ -68,6 +68,24 @@ const shiftSubPage = shift.makeSubPages(page, faderSubPageArea, device, globalBo
   midiCC: midiCCSubPage
 })
 
+// ******** The code for forcing the mixer to update on channel visibility changes
+
+var selectedTrack=page.mHostAccess.mTrackSelection.mMixerChannel
+var daSelectedTrack=page.mHostAccess.makeDirectAccess(selectedTrack)
+
+var refreshRate=5 // This is for setting up the latency for updating we're comfortable with
+var currentCount=0
+page.mOnIdle=function(activeDevice,activeMapping){
+
+    currentCount++
+    if(currentCount>=refreshRate){
+
+        currentCount=0
+        refreshSelected(activeDevice,activeMapping)
+    }
+}
+// ********
+
 // Bind the physical Mixer button to activate the Shift page
 page.makeActionBinding(device.master.buttons.mixer.mSurfaceValue, shiftSubPage.mAction.mActivate)
 const timerUtils = makeTimerUtils(deviceDriver, page, surface, isAPIVersion1_1);
@@ -88,3 +106,13 @@ activationCallbacks.addCallback((context) => {
   device.lcdManager.setIndicator1Text(context, 'Z');
   device.lcdManager.setIndicator2Text(context, 'N');
 });
+
+function refreshSelected(activeDevice, activeMapping) {
+
+    //setting the read automation of the selected track to its current value
+    //this will trick the mixer to update
+    var selectedTrackID=daSelectedTrack.getBaseObjectID(activeMapping)
+    var autoRead=daSelectedTrack.getParameterProcessValue(activeMapping,selectedTrackID,4013)
+    daSelectedTrack.setParameterProcessValue(activeMapping,selectedTrackID,4013,autoRead)
+
+}
