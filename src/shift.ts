@@ -114,8 +114,8 @@ export function makeSubPages(
     });
     //Bind Mute buttons to Selected Track subpages (cycling through first 4)
     const muteLabelData = [
-      { page: subpages.selectedTrack[0], label: 'EQ' },
-      { page: subpages.selectedTrack[1], label: 'SndsQC' },
+      { page: subpages.selectedTrack[0], label: 'SndsQC' },
+      { page: subpages.selectedTrack[1], label: 'EQ' },
       { page: subpages.selectedTrack[2], label: 'Pre.' },
       { page: subpages.selectedTrack[3], label: 'Cues' },
     ];
