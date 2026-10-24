@@ -198,8 +198,8 @@ export function makeTransport(surface: DecoratedDeviceSurface, x: number, y: num
   // Vertical - Note Clockwise  97, CounterClockwise 96
   // Horizontal - Note Clockwise  99, CounterClockwise 98
   // The Jog wheel is an endless encoder but the surface Push Encoder is control value 0-127
-  // In this case it pays to use the Absolute binding type as the Platform M+ produces a rate based
-  // CC value - turn clockwise slowly -> 1, turn it rapidly -> 7 (counter clockwise values are offset by 50, turn CCW slowly -> 51)
+  // Raw CC60 capture confirmed signed-bit encoding: clockwise 1-63, counterclockwise 65-127.
+  // The Platform M+ produces rate-based magnitudes: slow turns are near 1; fast turns increase the magnitude.
   // In the Jog (or more correctly Nudge Cursor) mapping we use this to "tap the key severel times" - giving the impact of fine grain control if turned slowly
   // or large nudges if turned quickly.
   // ? One weird side effect of this is the Knob displayed in Cubase will show its "value" in a weird way.

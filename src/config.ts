@@ -1,3 +1,11 @@
+import { defaultJogOptions } from "./midi/JogController";
+
+export const jogOptions = {
+  ...defaultJogOptions,
+  diagnostics: true,
+  traceValues: false,
+};
+
 // {title: "Expression", cc: 11}
 export const midi_cc = [
   {title: "CC16", cc: 16},

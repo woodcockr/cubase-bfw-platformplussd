@@ -1,9 +1,11 @@
 import { EnhancedMidiOutput, PortPair } from "../midi/PortPair";
 import { CallbackCollection, createElements } from "../util";
 import { enhanceButtonToLedButton } from "./button";
+import { decodeJogValue } from "../midi/JogController";
 
 export interface LedButton extends MR_Button {
   mLedValue: MR_SurfaceCustomValueVariable;
+  onHardwareValueChange?: (context: MR_ActiveDevice, value: number) => void;
   onSurfaceValueChange: CallbackCollection<
     Parameters<MR_Button["mSurfaceValue"]["mOnProcessValueChange"]>
   >;
@@ -20,9 +22,11 @@ export interface TouchSensitiveFader extends MR_Fader {
 }
 
 export interface JogWheel extends MR_PushEncoder {
-  mKnobModeEnabledValue: MR_SurfaceCustomValueVariable;
   mJogRightValue: MR_SurfaceCustomValueVariable;
   mJogLeftValue: MR_SurfaceCustomValueVariable;
+  mRelativeScrubEnabled: boolean;
+  mOnTurn?: (context: MR_ActiveDevice, delta: number) => boolean;
+  mOnInput?: (context: MR_ActiveDevice, value: number, difference: number) => void;
   bindToControlChange: (input: MR_DeviceMidiInput, controlChangeNumber: number) => void;
   bindToNote: (input: MR_DeviceMidiInput, note: number) => void;
 }
@@ -90,27 +94,32 @@ export function decorateSurface(surface: MR_DeviceSurface) {
     const jogWheel = surface.makePushEncoder(...args) as JogWheel;
 
     const mProxyValue = surface.makeCustomValueVariable("jogWheelProxy");
-    jogWheel.mKnobModeEnabledValue = surface.makeCustomValueVariable("jogWheelKnobModeEnabled");
     jogWheel.mJogRightValue = surface.makeCustomValueVariable("jogWheelJogRight");
     jogWheel.mJogLeftValue = surface.makeCustomValueVariable("jogWheelJogLeft");
+    jogWheel.mRelativeScrubEnabled = false;
 
     jogWheel.bindToNote = (input, note) => {
       jogWheel.mPushValue.mMidiBinding.setInputPort(input).bindToNote(0, note)
     }
 
     jogWheel.bindToControlChange = (input, controlChangeNumber) => {
+      if (jogWheel.mRelativeScrubEnabled) {
+        jogWheel.mEncoderValue.mMidiBinding
+          .setInputPort(input)
+          .bindToControlChange(0, controlChangeNumber)
+          .setTypeRelativeSignedBit();
+      }
+
       mProxyValue.mMidiBinding
         .setInputPort(input)
         .bindToControlChange(0, controlChangeNumber)
         .setTypeAbsolute();
       mProxyValue.mOnProcessValueChange = (context, value, _difference) => {
-        if (value < 0.5) {
-          var jump_rate = Math.floor(value * 127)
-          jogWheel.mJogRightValue.setProcessValue(context, jump_rate);
-        } else if (value > 0.5) {
-          var jump_rate = Math.floor((value - 0.5) * 127)
-          jogWheel.mJogLeftValue.setProcessValue(context, jump_rate);
-        }
+        const delta = decodeJogValue(value);
+        if (jogWheel.mOnInput) jogWheel.mOnInput(context, value, delta);
+        if (delta === 0 || (jogWheel.mOnTurn && jogWheel.mOnTurn(context, delta))) return;
+        const directionValue = delta > 0 ? jogWheel.mJogRightValue : jogWheel.mJogLeftValue;
+        directionValue.setProcessValue(context, Math.abs(delta));
       };
     };
 

@@ -3,6 +3,7 @@ import { CallbackCollection, ContextStateVariable, makeCallbackCollection } from
 
 export interface LedButton extends MR_Button {
   mLedValue: MR_SurfaceCustomValueVariable;
+  onHardwareValueChange?: (context: MR_ActiveDevice, value: number) => void;
   onSurfaceValueChange: CallbackCollection<
     Parameters<MR_Button["mSurfaceValue"]["mOnProcessValueChange"]>
   >;
@@ -39,6 +40,7 @@ export function enhanceButtonToLedButton(originalButton: MR_Button, surface: MR_
     // pressed.
     shadowValue.mMidiBinding.setInputPort(ports.input).bindToNote(0, note);
     shadowValue.mOnProcessValueChange = (context, newValue) => {
+      if (button.onHardwareValueChange) button.onHardwareValueChange(context, newValue);
       ports.output.sendNoteOn(
         context,
         note,

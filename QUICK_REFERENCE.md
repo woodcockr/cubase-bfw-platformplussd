@@ -28,6 +28,24 @@ The Icon Platform M+ has:
 | Record | Record |
 | Cycle | Loop On/Off |
 
+**Jog Wheel** (hardware Zoom lights off):
+
+Tap the wheel to cycle **Nudge (`N`) -> Scrub (`S`) -> Shuttle (`H`) -> Nudge**.
+Startup always selects Nudge.
+
+| Mode | Wheel Function |
+|------|----------------|
+| Nudge (`N`) | Existing Nudge Cursor Left/Right commands |
+| Scrub (`S`) | Relative Direct Access audio scrub; the encoder input recenters locally near its edges |
+| Shuttle (`H`) | Latched speed selector: enter at Stop, clockwise steps toward forward 8x, counterclockwise steps toward reverse 8x; each tick moves one speed regardless of magnitude |
+
+Scrub ends after approximately 200 ms without movement. Shuttle speed remains
+latched until Stop is selected or Shuttle is deselected; mode changes and
+hardware transport/Zoom takeover release its held speed and reset the selector
+to Stop. Recording blocks new wheel transport activity. See the
+[Shuttle runtime check](README.md#shuttle-mode-experimental) before using the
+new mode in a working project.
+
 **Stream Deck (SD) Buttons**:
 | Control | Function |
 |---------|----------|
