@@ -236,20 +236,23 @@ function adapterFixture(tags = [4041, 4044].concat(shuttleParameterTags), initia
   const variables = new Map();
   const valueBindings = [];
   const midiBindingTypes = [];
+  let hostPosition = initialPosition;
+  let transportID = 42;
   const directAccess = {
     activate: () => events.push("activate"),
     deactivate: () => events.push("deactivate"),
-    getBaseObjectID: () => 42,
+    getBaseObjectID: () => transportID,
     getNumberOfParameters: () => tags.length,
     getParameterTagByIndex: (_mapping, _objectID, index) => tags[index],
     getParameterTitle: (_mapping, _objectID, tag) => tag === 4044 ? "Jog" : "Jog Active",
-    getParameterProcessValue: (_mapping, _objectID, tag) => tag === 4044 ? initialPosition : 0,
+    getParameterProcessValue: (_mapping, _objectID, tag) => tag === 4044 ? hostPosition : 0,
     getParameterDefaultProcessValue: (_mapping, _objectID, tag) => tag === 4044 ? 0.5 : 0,
     getParameterDisplayValue: (_mapping, _objectID, tag) => tag === 4044 ? "0.5" : "Off",
     setParameterProcessValue(activeMapping, objectID, tag, value) {
       assert.equal(activeMapping, mapping);
-      assert.equal(objectID, 42);
+      assert.equal(objectID, transportID);
       writes.push({ tag, value });
+      if (tag === 4044) hostPosition = value;
       if (tag === 4041 && value === 0) events.push("jogOff");
     },
   };
@@ -317,6 +320,11 @@ function adapterFixture(tags = [4041, 4044].concat(shuttleParameterTags), initia
   return {
     context, mapping, events, writes, variables, valueBindings, midiBindingTypes, device, directAccess, nudge, scrub, shuttle, lifecycle,
     activate() { lifecycle.activate(context, mapping); },
+    setHostPosition(value) { hostPosition = value; },
+    replaceTransport(id) {
+      transportID = id;
+      directAccess.mOnObjectChange(context, mapping, id);
+    },
     recording(value) {
       const binding = valueBindings.find(item => item.variable === variables.get("jogRecordMonitor"));
       binding.mOnValueChange(context, mapping, value);
@@ -488,7 +496,7 @@ test("relative Scrub summary reports each local encoder rebase", () => {
   const previousDiagnostics = jogOptions.diagnostics;
   jogOptions.diagnostics = true;
   try {
-    const remote = adapterFixture();
+    const remote = adapterFixture(undefined, 0.1);
     remote.activate();
     remote.recording(0);
     remote.selectScrub();
@@ -667,7 +675,7 @@ test("Scrub always binds CC60 signed-bit to the actual encoder value", () => {
 });
 
 test("relative Scrub recenters only its surface value and writes samples to Direct Access", () => {
-    const remote = adapterFixture();
+    const remote = adapterFixture(undefined, 0.1);
     remote.activate();
     remote.recording(0);
     remote.selectScrub();
@@ -730,8 +738,8 @@ test("single relative encoder binding dispatches Nudge and Shuttle while Scrub u
     assert.deepEqual(remote.writes, [{ tag: 2010, value: 1 }, { tag: 2010, value: 0 }]);
     remote.rawMidi(65);
     assert.deepEqual(remote.writes, [{ tag: 2010, value: 1 }, { tag: 2010, value: 0 }]);
-    remote.relativeScrub(0.51, 1 / 127);
-    assert.deepEqual(remote.writes[2], { tag: 4044, value: 0.51 });
+    remote.relativeScrub(0.5 + 1 / 127, 1 / 127);
+    assert.deepEqual(remote.writes[2], { tag: 4044, value: 0.5 + 1 / 127 });
 });
 
 test("Shuttle starts at Stop, latches its first speed, and resets on mode exit", () => {
@@ -955,4 +963,102 @@ test("raw MCU packets drive Shuttle without triggering Nudge or Scrub values", (
   assert.equal(remote.variables.get("jogWheelJogRight").writes.length, 0);
   assert.equal(remote.variables.get("jogWheelJogLeft").writes.length, 0);
   assert.equal(remote.events.includes("Stop"), false);
+});
+test("Scrub gesture continues from the host Jog position when the local encoder differs", () => {
+  const remote = adapterFixture([4041, 4044], 0.7);
+  remote.activate();
+  remote.recording(0);
+  remote.selectScrub();
+  const encoder = remote.variables.get("jogEncoderValue");
+  remote.relativeScrub(0.505, 0.005);
+  assert.equal(remote.writes.length, 1);
+  assert.ok(Math.abs(remote.writes[0].value - 0.705) < 1e-9, "first write must not jump from the host baseline");
+  assert.ok(Math.abs(encoder.writes[encoder.writes.length - 1] - 0.705) < 1e-9);
+  remote.relativeScrub(0.705, 0.2);
+  assert.equal(remote.writes.length, 1, "the local resync echo must not write");
+  remote.relativeScrub(0.71, 0.005);
+  assert.deepEqual(remote.writes[1], { tag: 4044, value: 0.71 });
+});
+
+test("Scrub resyncs at the start of each gesture after the host position moves", () => {
+  const remote = adapterFixture();
+  remote.activate();
+  remote.recording(0);
+  remote.selectScrub();
+  currentTime = 0;
+  remote.relativeScrub(0.51, 0.01);
+  remote.idle(200);
+  remote.setHostPosition(0.3);
+  currentTime = 300;
+  remote.relativeScrub(0.52, 0.01);
+  assert.ok(Math.abs(remote.writes[remote.writes.length - 1].value - 0.31) < 1e-9);
+});
+
+test("Scrub keeps the local rebase near the edges instead of resyncing forever", () => {
+  const remote = adapterFixture([4041, 4044], 0.9);
+  remote.activate();
+  remote.recording(0);
+  remote.selectScrub();
+  remote.relativeScrub(0.105, 0.005);
+  remote.relativeScrub(0.11, 0.005);
+  assert.ok(remote.writes.length >= 1, "Scrub must not stay stuck when the host is near an edge");
+});
+
+test("the echo of a local Scrub rebase does not write the reset value", () => {
+  const remote = adapterFixture(undefined, 0.11);
+  remote.activate();
+  remote.recording(0);
+  remote.selectScrub();
+  remote.relativeScrub(0.105, -0.005);
+  const count = remote.writes.length;
+  remote.relativeScrub(0.095, -0.01);
+  assert.equal(remote.writes.length, count);
+  remote.relativeScrub(0.9, 0.805);
+  assert.equal(remote.writes.length, count, "rebase echo wrote the transport");
+  remote.relativeScrub(0.89, -0.01);
+  assert.deepEqual(remote.writes[remote.writes.length - 1], { tag: 4044, value: 0.89 });
+});
+
+test("a Record press without record feedback blocks the wheel only briefly", () => {
+  const remote = adapterFixture();
+  remote.activate();
+  remote.recording(0);
+  currentTime = 0;
+  remote.press("record");
+  assert.equal(remote.turn(1, 10), true, "wheel must wait for record feedback after Record");
+  assert.equal(remote.turn(1, 1001), false, "Nudge must resume when Cubase never started recording");
+  remote.selectScrub();
+  currentTime = 1001;
+  remote.relativeScrub(0.51, 0.01);
+  assert.deepEqual(remote.writes, [{ tag: 4044, value: 0.51 }]);
+});
+
+test("record feedback after a Record press is authoritative", () => {
+  const remote = adapterFixture();
+  remote.activate();
+  remote.recording(0);
+  remote.press("record");
+  remote.recording(0);
+  assert.equal(remote.turn(1, 10), false, "confirmed not-recording feedback clears the guard");
+  remote.press("record");
+  remote.recording(1);
+  assert.equal(remote.turn(1, 5000), true, "confirmed recording keeps the wheel blocked");
+});
+
+test("a replacement transport waits for record feedback before Scrub or Shuttle", () => {
+  const remote = adapterFixture();
+  remote.activate();
+  remote.recording(0);
+  remote.selectScrub();
+  currentTime = 0;
+  remote.replaceTransport(43);
+  remote.relativeScrub(0.51, 0.01);
+  assert.equal(remote.writes.length, 0, "Scrub wrote before the new project's record state was known");
+  remote.recording(1);
+  currentTime = 5000;
+  remote.relativeScrub(0.52, 0.01);
+  assert.equal(remote.writes.length, 0);
+  remote.recording(0);
+  remote.relativeScrub(0.53, 0.01);
+  assert.equal(remote.writes.length, 1);
 });

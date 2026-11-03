@@ -101,7 +101,11 @@ It enters at Stop; each clockwise tick advances one forward speed regardless of
 tick magnitude, and each counterclockwise tick moves one selector position back
 through Stop into reverse speeds. The selected native speed remains active until
 another position is selected or Shuttle is exited. Leaving Shuttle releases the
-owned speed flag and resets the selector to Stop. Recording, mode/transport
+owned speed flag and resets the selector to Stop. Recording state comes only
+from Cubase's record feedback. A hardware Record press, or a switch to a new
+project transport, blocks the wheel until that feedback arrives (at most
+`recordPendingTimeoutMs`, default 1 s), so a Record press that Cubase ignores
+cannot leave the wheel blocked. Recording, mode/transport
 takeover, and reconnect behavior still require Cubase runtime verification.
 
 Jog diagnostics are in [src/config.ts](src/config.ts), under `jogOptions`:
@@ -129,8 +133,10 @@ Scrub does not explicitly write jogActive tag 4041 during cleanup, matching the
 reference example. If a skip occurs, record direction counts, rebase count, and
 whether it occurs during movement, at a rebase, or at release.
 
-Tag 4044 is a bounded jog position, not a playback-speed value. Startup reads its
-current value rather than assuming it is centred. The script never resets this
+Tag 4044 is a bounded jog position, not a playback-speed value. Each Scrub gesture
+starts from Cubase's current 4044 value: if the local encoder differs, it is
+resynced to that value (and the echo of that resync, or of an edge recenter, is
+ignored) so the first write cannot jump. The script never resets this
 position, even with jog inactive: the gated-reset experiment also caused jumps
 and has been rejected. Scrub does not write tag 4041 or issue Transport Stop
 during cleanup. The reference implementation also skips; the user considers the

@@ -25,6 +25,9 @@ export const shuttleParameterTags = shuttleSpeedLevels.map(level => level.forwar
 
 export const defaultJogOptions = {
   idleTimeoutMs: 200,
+  // Wheel input stays blocked this long after a Record press or transport
+  // replacement unless Cubase's record feedback confirms the state sooner.
+  recordPendingTimeoutMs: 1000,
 };
 
 export interface JogState {

@@ -26,7 +26,7 @@ Updated: 2026-10-24
 - Tag 4041 is `Jog Active`. Reference Scrub does not write it; current relative mode also avoids explicit 4041-off cleanup.
 - User reports the reference Scrub implementation also skips and considers the retained relative Scrub behavior usable. The bounded alternative has been removed.
 - “Return to Start Position on Stop” was disabled during a skip, ruling that preference out for that test. The Cubase Stop button often flashes, but that alone does not establish that the script sent Stop.
-- Current validation baseline: `npm run test:jog` has 50 tests; all pass after replacing bounded-Scrub and momentary-Shuttle expectations. `npm run build` targets ES5. `npm run tsc -- --pretty false` still reports four pre-existing errors (two implicit-any callback parameters in `bfw_platformplussd.ts`, missing `abbreviate` declaration, and possible undefined device in `midi/binding.ts`).
+- Current validation baseline: `npm run test:jog` has 58 tests, including regressions for the PR #2 review findings (Record latch, replacement-transport record state, Scrub baseline resync). `npm run build` targets ES5. `npm run tsc -- --pretty false` still reports four pre-existing errors (two implicit-any callback parameters in `bfw_platformplussd.ts`, missing `abbreviate` declaration, and possible undefined device in `midi/binding.ts`).
 
 ## Scrub Investigation
 

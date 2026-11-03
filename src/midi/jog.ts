@@ -26,6 +26,11 @@ export function setupJogBindings(
   const recordingKnown = new ContextStateVariable(false);
   const waitingNoticeShown = new ContextStateVariable(false);
   const transportObjectID = new ContextStateVariable(-1);
+  // Confirmed recording comes only from recordMonitor; this guards the gap
+  // before that feedback arrives without latching if it never does.
+  const recordPendingUntil = new ContextStateVariable(0);
+  // Local encoder value we set ourselves; its callback echo must not scrub.
+  const scrubInputEcho = new ContextStateVariable(-1);
   const activity = new ContextStateVariable({ ticks: 0, peakDelta: 0, forwardTicks: 0, reverseTicks: 0, rebases: 0 });
   const recordMonitor = surface.makeCustomValueVariable("jogRecordMonitor");
   let currentMapping: MR_ActiveMapping | undefined;
@@ -33,9 +38,28 @@ export function setupJogBindings(
   const relativeScrubHost = page.mCustom.makeHostValueVariable("jogRelativeScrubHost");
   page.makeValueBinding(device.transport.jog_wheel.mEncoderValue, relativeScrubHost)
     .setSubPage(scrubPage).mOnValueChange = (context, mapping, value, difference) => {
-      if (!recordingKnown.get(context) || stateVariable.get(context).recording || !available.get(context)) return;
+      const echo = scrubInputEcho.get(context);
+      if (echo >= 0) {
+        scrubInputEcho.set(context, -1);
+        if (Math.abs(value - echo) < 1e-6) return;
+      }
+      if (wheelInputBlocked(context) || !available.get(context)) return;
       const objectID = directAccess.getBaseObjectID(mapping);
       if (objectID < 0 || objectID !== transportObjectID.get(context)) return;
+
+      // At the start of a gesture, continue from Cubase's current Jog
+      // position rather than the local encoder value, so the first write
+      // cannot jump. Skipped near the edges, where the local rebase applies.
+      let input = value;
+      if (!stateVariable.get(context).moving && isFinite(difference)) {
+        const host = directAccess.getParameterProcessValue(mapping, objectID, jogParameterTags.position);
+        const target = host + difference;
+        if (isFinite(host) && Math.abs(host - (value - difference)) > 1e-4
+          && target >= 0.1 && target <= 0.9) {
+          input = target;
+          setScrubInput(context, target);
+        }
+      }
 
       const summary = activity.get(context);
       const values = summary.ticks > 0 ? summary : {
@@ -52,17 +76,31 @@ export function setupJogBindings(
       activity.set(context, values);
 
       withController(context, mapping, controller => controller.turnRelative(
-        value,
+        input,
         difference,
         Date.now(),
         resetValue => {
           const currentActivity = activity.get(context);
           currentActivity.rebases++;
           activity.set(context, currentActivity);
-          device.transport.jog_wheel.mEncoderValue.setProcessValue(context, resetValue);
+          setScrubInput(context, resetValue);
         }
       ));
     };
+
+  function setScrubInput(context: MR_ActiveDevice, value: number) {
+    scrubInputEcho.set(context, value);
+    device.transport.jog_wheel.mEncoderValue.setProcessValue(context, value);
+  }
+
+  function wheelInputBlocked(context: MR_ActiveDevice) {
+    return !recordingKnown.get(context) || stateVariable.get(context).recording
+      || Date.now() < recordPendingUntil.get(context);
+  }
+
+  function guardUntilRecordFeedback(context: MR_ActiveDevice) {
+    recordPendingUntil.set(context, Date.now() + jogOptions.recordPendingTimeoutMs);
+  }
 
   function withController(
     context: MR_ActiveDevice,
@@ -174,6 +212,7 @@ export function setupJogBindings(
   page.makeValueBinding(recordMonitor, page.mHostAccess.mTransport.mValue.mRecord).mOnValueChange =
     (context, mapping, value) => {
       recordingKnown.set(context, true);
+      recordPendingUntil.set(context, 0);
       waitingNoticeShown.set(context, false);
       if (jogOptions.diagnostics) logInfo("Jog recording state=" + value);
       withController(context, mapping, (controller, state) => {
@@ -203,7 +242,7 @@ export function setupJogBindings(
     }
     const mapping = currentMapping;
     const state = stateVariable.get(context);
-    if (state.recording) return true;
+    if (wheelInputBlocked(context)) return true;
     if (state.mode === "nudge") {
       if (jogOptions.diagnostics && jogOptions.traceValues) {
         logInfo("Nudge command direction=" + (delta > 0 ? "right" : "left")
@@ -252,8 +291,8 @@ export function setupJogBindings(
           : button === device.transport.buttons.forward ? "forward"
           : button === device.transport.buttons.rewind ? "rewind"
           : "record";
+        if (button === device.transport.buttons.record) guardUntilRecordFeedback(context);
         withController(context, currentMapping, (controller, state) => {
-          if (button === device.transport.buttons.record) state.recording = true;
           if (jogOptions.diagnostics && jogOptions.traceValues) {
             logInfo("Transport button input=" + buttonName + " value=" + value);
           }
@@ -288,6 +327,9 @@ export function setupJogBindings(
   directAccess.mOnObjectChange = (context, mapping) => {
     if (directAccess.getBaseObjectID(mapping) === transportObjectID.get(context)) return;
     releaseController(context, mapping, "transport object change");
+    // A replacement transport may belong to a project whose record state has
+    // not been reported yet; feedback that already arrived stays authoritative.
+    guardUntilRecordFeedback(context);
     probe(context, mapping);
   };
   directAccess.mOnObjectWillBeRemoved = (context, mapping, objectID) => {
@@ -316,6 +358,8 @@ export function setupJogBindings(
       shuttleAvailable.set(context, false);
       transportObjectID.set(context, -1);
       recordingKnown.set(context, false);
+      recordPendingUntil.set(context, 0);
+      scrubInputEcho.set(context, -1);
       currentMapping = undefined;
       directAccess.deactivate(mapping);
     },
