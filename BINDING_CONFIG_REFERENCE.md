@@ -28,7 +28,6 @@ const config: BindingConfig = {
   id: "mixer",
   name: "Mixer",
   description: "Track mixer with volume and pan controls",       // Optional description
-  masterButton: "subPageMixer",
   hostAccessor: "hostMixerBankZone",
   bindings: {
     perChannel: [

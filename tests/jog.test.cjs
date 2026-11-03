@@ -26,6 +26,7 @@ function loadTypeScript(filePath) {
     performance: { now: () => currentTime },
     Date: { now: () => currentTime },
     console: { log(message) { logMessages.push(message); } },
+    __BFW_DEBUG_LOGS__: false,
   }, { filename: resolved });
   return exportsObject;
 }

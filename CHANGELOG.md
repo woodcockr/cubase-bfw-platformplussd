@@ -2,6 +2,31 @@
 
 All notable changes to the Icon Platform M+ MIDI Remote project will be documented in this file.
 
+## [4.1.0-rc1] - 2026-11-04
+
+Release notes: [release-notes/v4.1.0-rc1.md](release-notes/v4.1.0-rc1.md)
+
+### Added
+- **Jog wheel modes**: tap the wheel to cycle Nudge (`N`), Scrub (`S`) and Shuttle (`H`). Scrub uses Cubase 15 Direct Access audio scrubbing; Shuttle is a latched speed selector (Stop, 1/8x to 8x forward and reverse).
+- **Editable MIDI CC configuration**: `midi-cc-config.js` ships beside the driver and sets each MIDI CC page channel with simple `"<CC>, <name>"` lines. Any error falls back to the built-in defaults and logs `[MIDI CC config]` messages to the script console.
+- Standard MIDI CC names, with orchestral library names for CC1 (Dynamics), CC2 (Breath), CC7 (Volume), CC11 (Expression) and CC21 (Vibrato).
+- **Logging levels**: `src/logger.ts` with debug/info/warning/error. `npm run build` prints only startup status, warnings and errors; `npm run build:dev` adds development tracing.
+
+### Changed
+- Releases now include a zip with the Cubase folder layout (`bfw/platformmplussd/`) as well as the individual files.
+- MIDI CC page defaults are now CC1, CC11, CC2, CC21, CC7, CC16, CC17, CC18.
+- MIDI CC page LCD shows the CC name and fader value; encoders step one CC per detent.
+- `midi_cc` removed from `src/config.ts`.
+- Jog `diagnostics` now follows the build type instead of being always on.
+- The idle-callback warning now prints once instead of on every idle tick.
+
+### Fixed
+- Removed the unused `masterButton` subpage option, which logged 9 "Master button … not found" warnings at startup. Stream Deck page buttons are bound directly and are unchanged.
+- Removed a leftover MIDI CC fader binding (`customVariable`) that logged 8 "Could not resolve host value" warnings at startup.
+
+### Known issues
+- Scrub can occasionally jump back after long continuous jogging. Pausing briefly every few turns limits this.
+
 ## [3.0.0] - 2026-02-14
 
 ### Added

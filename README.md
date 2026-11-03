@@ -10,6 +10,37 @@ Usage:
 
 See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for a complete guide to all pages, buttons, and faders on the Icon Platform M+.
 
+### MIDI CC configuration
+
+The MIDI CC page channel assignments are read from `midi-cc-config.js`, which
+is installed beside `bfw_platformmplussd.js` in the driver folder
+(`MIDI Remote/Driver Scripts/Local/bfw/platformmplussd/`). Open it in any text
+editor and change only the lines between `BEGIN MIDI CC CONFIG` and
+`END MIDI CC CONFIG`. Each line is one channel, in order:
+
+```
+  "1, Dynamics",
+  "11, Expression",
+  "16,",
+```
+
+- CC number `0`–`127`, then an optional name (blank uses the standard name).
+- Up to 8 lines; missing channels use the defaults.
+- Rows starting with `#` are ignored.
+
+Built-in defaults: CC1 Dynamics, CC11 Expression, CC2 Breath, CC21 Vibrato,
+CC7 Volume, CC16, CC17, CC18 (General Purpose 1–3).
+
+If the file is missing or contains any error, the driver still loads, uses the
+complete built-in defaults, and writes messages starting with
+`[MIDI CC config]` to the MIDI Remote script console. Reload the script or
+restart Cubase after editing. When upgrading, keep a copy of your edited
+`midi-cc-config.js` and copy it back over the newly installed one.
+
+The source of the shipped file is [src/midi-cc-config.js](src/midi-cc-config.js);
+`npm run build` copies it into `dist/bfw/platformmplussd/`. Run
+`npm run test:midi-cc` for the parser tests.
+
 
 Architecture:
 --------------
@@ -20,6 +51,28 @@ This pattern is applied to all subpages including Selected Track (SendsQC, EQ, C
 
 Development:
 ------------
+
+### Script console logging
+
+All script output goes through [src/logger.ts](src/logger.ts):
+
+- **Debug**: development tracing (binding creation, LCD writes, display state,
+  page activation, jog diagnostics). Printed only by a development build.
+- **Info**: brief startup status (driver activated, MIDI CC config loaded,
+  Direct Access jog ready).
+- **Warning / Error**: problems such as an invalid `midi-cc-config.js`,
+  unavailable Direct Access parameters, or binding configuration errors.
+
+| Command | Output |
+|---|---|
+| `npm run build` | Release build: info, warnings and errors only |
+| `npm run build:dev` | Development build: also prints debug logs |
+| `npm run start` / `npm run start:dev` | Watch-mode equivalents |
+
+The flag is the build-time constant `__BFW_DEBUG_LOGS__` (set in
+[tsup.config.ts](tsup.config.ts)). In frequently called code, guard debug calls
+with `if (debugLogsEnabled)` so release builds skip building the message.
+Run `npm run test:logger` for the logger tests.
 
 See [DUKTAPE_COMPATIBILITY.md](DUKTAPE_COMPATIBILITY.md) for important compatibility notes about Cubase's JavaScript engine (Duktape) and known workarounds for common issues.
 
@@ -54,14 +107,14 @@ takeover, and reconnect behavior still require Cubase runtime verification.
 Jog diagnostics are in [src/config.ts](src/config.ts), under `jogOptions`:
 
 - `idleTimeoutMs`: inactivity before ending a Scrub gesture (default `200 ms`); Shuttle remains latched through inactivity.
-- `diagnostics`: log startup metadata and one summary when each Scrub or Shuttle gesture ends (enabled for runtime checks).
+- `diagnostics`: log startup metadata and one summary when each Scrub or Shuttle gesture ends (on in `npm run build:dev`, off in `npm run build`; set to `true` to force on).
 - `traceValues`: additionally log wheel ticks, Nudge routing, Shuttle selector positions/native-tag writes, and Direct Access parameter changes (default `false`; enable only for short captures).
 
 Run `npm run test:jog` for controller and mocked MIDI Remote integration tests,
 then `npm run build` to produce the driver. These tests cannot verify audio or
 Duktape behavior; test the built script in Cubase before relying on it.
 
-For a Cubase probe, enable `diagnostics`, build, and install the driver:
+For a Cubase probe, build with `npm run build:dev` (enables `diagnostics`) and install the driver:
 
 1. Activate the driver and confirm the console says
     `Direct Access Scrub ready (single CC60 relative binding)`.

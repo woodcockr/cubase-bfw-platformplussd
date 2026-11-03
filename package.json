@@ -1,13 +1,17 @@
 {
   "name": "cubase-bfw-platformmplussd",
-  "version": "3.0.0",
+  "version": "4.1.0-rc1",
   "private": true,
   "description": "Cubase MIDI Remote for the Icon Platform M+ controller with StreamDeck",
   "scripts": {
     "build": "tsup",
+    "build:dev": "tsup --env.BFW_DEBUG_LOGS true",
     "start": "tsup --watch",
+    "start:dev": "tsup --watch --env.BFW_DEBUG_LOGS true",
     "tsc": "tsc",
     "test:jog": "node --test tests/jog.test.cjs",
+    "test:midi-cc": "node --test tests/midi-cc.test.cjs",
+    "test:logger": "node --test tests/logger.test.cjs",
     "postversion": "npm run build",
     "postinstall": "patch-package"
   },

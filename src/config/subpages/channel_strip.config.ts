@@ -16,7 +16,7 @@ const EFFECT_TOGGLES = [
   { index: 4, effect: 'mLimiter' },
 ] as const;
 
-function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], name: string, buttonKey: string): BindingConfig {
+function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], name: string): BindingConfig {
   const fixedIndexBindings = EFFECT_TOGGLES.flatMap(({ index, effect }) => ([
     {
       id: `${effect}-record`,
@@ -40,7 +40,6 @@ function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], na
     id: name.toLowerCase(),
     name,
     description: `${name} strip module`,
-    masterButton: buttonKey,
     hostAccessor: 'selectedTrackStripEffects',
 
     bindings: {
@@ -106,8 +105,8 @@ function makeEffectConfig(effectKey: typeof EFFECT_TOGGLES[number]['effect'], na
   };
 }
 
-export const GATE_CONFIG = makeEffectConfig('mGate', 'Gate', 'subPageGate');
-export const COMPRESSOR_CONFIG = makeEffectConfig('mCompressor', 'Compressor', 'subPageCompressor');
-export const TOOLS_CONFIG = makeEffectConfig('mTools', 'Tools', 'subPageTools');
-export const SATURATOR_CONFIG = makeEffectConfig('mSaturator', 'Saturator', 'subPageSaturator');
-export const LIMITER_CONFIG = makeEffectConfig('mLimiter', 'Limiter', 'subPageLimiter');
+export const GATE_CONFIG = makeEffectConfig('mGate', 'Gate');
+export const COMPRESSOR_CONFIG = makeEffectConfig('mCompressor', 'Compressor');
+export const TOOLS_CONFIG = makeEffectConfig('mTools', 'Tools');
+export const SATURATOR_CONFIG = makeEffectConfig('mSaturator', 'Saturator');
+export const LIMITER_CONFIG = makeEffectConfig('mLimiter', 'Limiter');

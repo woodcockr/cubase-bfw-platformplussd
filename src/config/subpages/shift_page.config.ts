@@ -14,7 +14,6 @@ export const SHIFT_PAGE_CONFIG: BindingConfig = {
   id: 'shift',
   name: 'Shift',
   description: 'Shift subpage with additional functionality',
-  masterButton: 'subPageShift',
 
   bindings: {
     // Dummy bindings to clear unused controls on all channels

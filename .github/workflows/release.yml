@@ -33,13 +33,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Test
+        run: |
+          npm run test:logger
+          npm run test:midi-cc
+          npm run test:jog
+
       - name: Build
         run: npm run build
+
+      - name: Package
+        run: |
+          test -f dist/bfw/platformmplussd/bfw_platformmplussd.js
+          test -f dist/bfw/platformmplussd/midi-cc-config.js
+          (cd dist && zip -r "../bfw-platformmplussd-${GITHUB_REF_NAME}.zip" bfw)
+
+      - name: Select release notes
+        id: notes
+        run: |
+          if [ -f "release-notes/${GITHUB_REF_NAME}.md" ]; then
+            echo "path=release-notes/${GITHUB_REF_NAME}.md" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/**
+          files: |
+            bfw-platformmplussd-${{ github.ref_name }}.zip
+            dist/bfw/platformmplussd/bfw_platformmplussd.js
+            dist/bfw/platformmplussd/midi-cc-config.js
+          body_path: ${{ steps.notes.outputs.path }}
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

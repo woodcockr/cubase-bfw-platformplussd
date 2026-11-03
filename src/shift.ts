@@ -12,6 +12,7 @@
 import { IconPlatformMplus } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding"
 import { DecoratedFactoryMappingPage } from "./decorators/page"
+import { logDebug } from "./logger"
 import { BindingCreator } from "./config/bindingCreator"
 import { SHIFT_PAGE_CONFIG } from "./config/subpages/shift_page.config"
 
@@ -146,7 +147,7 @@ export function makeSubPages(
       device.displayStateManager.setActivePage(activeDevice, pageId);
 
       // Log activation message (from SHIFT_PAGE_CONFIG)
-      console.log('from script: Platform M+ page "Shift Page" activated');
+      logDebug('from script: Platform M+ page "Shift Page" activated');
 
       // Update global variables (from SHIFT_PAGE_CONFIG activation.globalVariables)
       globalBooleanVariables.refreshDisplay.toggle(activeDevice);
@@ -187,12 +188,11 @@ export function makeSubPages(
       };
     };
 
-    // Note: The masterButton 'subPageShift' will automatically be bound to activate this subpage
-    // The Mixer button binding to activate Shift is handled in the main file
+    // Shift page activation (Mixer and Stream Deck buttons) is bound in the main file
 
     // Deactivation handler to clear display
     subPage.mOnDeactivate = (activeDevice: MR_ActiveDevice, _activeMapping: MR_ActiveMapping) => {
-      console.log('from script: Platform M+ page "Shift" deactivated')
+      logDebug('from script: Platform M+ page "Shift" deactivated')
 
       // Clear channel text rows
       for (let i = 0; i < device.numStrips; ++i) {

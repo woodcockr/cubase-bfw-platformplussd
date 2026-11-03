@@ -4,6 +4,7 @@
  */
 
 import { IconPlatformMplus } from '../icon_elements';
+import { logDebug, logError, logWarning } from '../logger';
 import { GlobalBooleanVariables } from '../midi/binding';
 import { DecoratedFactoryMappingPage } from '../decorators/page';
 import {
@@ -93,10 +94,6 @@ export class BindingCreator {
       this.setupActivationHandler(config, subPage);
     }
 
-    // Setup master button binding
-    if (config.masterButton) {
-      this.setupMasterButton(config, subPage);
-    }
 
     return subPage;
   }
@@ -161,8 +158,8 @@ export class BindingCreator {
         const hostValue = this.resolveHostValue(binding.hostValue!, hostValueBase, channelIndex);
 
         if (!this.isHostValueValid(hostValue)) {
-          console.log(
-            `Warning: Could not resolve host value at channel ${channelIndex}, path "${binding.hostValue}"`
+          logWarning(
+            `Could not resolve host value at channel ${channelIndex}, path "${binding.hostValue}"`
           );
           continue;
         }
@@ -209,16 +206,16 @@ export class BindingCreator {
           }
 
           if (!this.isHostValueValid(hostValue)) {
-            console.log(
-              `Warning: Could not resolve host value at channel ${channelIndex}, path "${binding.hostValue}"`
+            logWarning(
+              `Could not resolve host value at channel ${channelIndex}, path "${binding.hostValue}"`
             );
             continue;
           }
 
           const surfaceValue = this.resolveSurfaceValue(channelIndex, binding.surface);
           if (!this.isSurfaceValueValid(surfaceValue)) {
-            console.log(
-              `Error: Invalid surface value in multi binding at channel ${channelIndex}, surface "${binding.surface}"`
+            logError(
+              `Invalid surface value in multi binding at channel ${channelIndex}, surface "${binding.surface}"`
             );
             continue;
           }
@@ -272,16 +269,16 @@ export class BindingCreator {
         const surfaceIndex = channelIndex + (binding.surfaceIndexOffset ?? 0);
         const surfaceValue = this.resolveSurfaceValue(surfaceIndex, binding.surface);
         if (!this.isSurfaceValueValid(surfaceValue)) {
-          console.log(
-            `Error: Invalid surface value in indexed binding at channel ${channelIndex}, surface "${binding.surface}"`
+          logError(
+            `Invalid surface value in indexed binding at channel ${channelIndex}, surface "${binding.surface}"`
           );
           continue;
         }
 
         const hostValue = this.resolveHostValue(binding.hostValue!, hostAccessor, channelIndex);
         if (!this.isHostValueValid(hostValue)) {
-          console.log(
-            `Error: Invalid host value in indexed binding at channel ${channelIndex}, surface "${binding.surface}", host "${binding.hostValue}"`
+          logError(
+            `Invalid host value in indexed binding at channel ${channelIndex}, surface "${binding.surface}", host "${binding.hostValue}"`
           );
           continue;
         }
@@ -330,8 +327,8 @@ export class BindingCreator {
     for (const binding of bindings) {
       const surfaceValue = this.resolveSurfaceValue(binding.channelIndex, binding.surface);
       if (!this.isSurfaceValueValid(surfaceValue)) {
-        console.log(
-          `Error: Invalid surface value in fixed binding at channel ${binding.channelIndex}, surface "${binding.surface}"`
+        logError(
+          `Invalid surface value in fixed binding at channel ${binding.channelIndex}, surface "${binding.surface}"`
         );
         continue;
       }
@@ -380,8 +377,8 @@ export class BindingCreator {
             dupBinding.setSubPage(subPage);
           }
         } else {
-          console.log(
-            `Error: Invalid host value in fixed binding at channel ${binding.channelIndex}, surface "${binding.surface}", host "${binding.hostValue}"`
+          logError(
+            `Invalid host value in fixed binding at channel ${binding.channelIndex}, surface "${binding.surface}", host "${binding.hostValue}"`
           );
         }
       }
@@ -400,8 +397,8 @@ export class BindingCreator {
     for (const binding of bindings) {
       const surfaceValue = this.resolveSurfaceValue(0, binding.surface);
       if (!this.isSurfaceValueValid(surfaceValue)) {
-        console.log(
-          `Error: Invalid surface value in command binding, surface "${binding.surface}"`
+        logError(
+          `Invalid surface value in command binding, surface "${binding.surface}"`
         );
         continue;
       }
@@ -478,8 +475,8 @@ export class BindingCreator {
             i
           );
           if (!this.isHostValueValid(resolvedHostValue)) {
-            console.log(
-              `Error: Invalid host value in variable binding at channel ${i}, host "${binding.hostValue}"`
+            logError(
+              `Invalid host value in variable binding at channel ${i}, host "${binding.hostValue}"`
             );
             continue;
           }
@@ -510,8 +507,8 @@ export class BindingCreator {
       for (const path of bindingPaths) {
         const surfaceValue = this.resolveSurfaceValue(i, path);
         if (!this.isSurfaceValueValid(surfaceValue)) {
-          console.log(
-            `Error: Invalid surface value in dummy binding at channel ${i}, surface "${path}"`
+          logError(
+            `Invalid surface value in dummy binding at channel ${i}, surface "${path}"`
           );
           continue;
         }
@@ -553,27 +550,27 @@ export class BindingCreator {
     const surfaceValue = this.resolveSurfaceValue(channelIndex, binding.surface);
 
     if (!surfaceValue) {
-      console.log(
-        `Warning: Could not resolve surface value at channel ${channelIndex}, path "${binding.surface}"`
+      logWarning(
+        `Could not resolve surface value at channel ${channelIndex}, path "${binding.surface}"`
       );
       return;
     }
 
-    console.log(
+    logDebug(
       `Creating binding for channel ${channelIndex}: ${binding.id} (${binding.surface} -> ${binding.hostValue}), surfaceValue type: ${typeof surfaceValue}`
     );
 
     // Safety check: ensure we have a valid object to bind
     if (typeof surfaceValue !== 'object' || surfaceValue === null) {
-      console.log(
-        `Error: Invalid surface value type for channel ${channelIndex}, binding ${binding.id}: ${typeof surfaceValue}`
+      logError(
+        `Invalid surface value type for channel ${channelIndex}, binding ${binding.id}: ${typeof surfaceValue}`
       );
       return;
     }
 
     if (!this.isHostValueValid(hostValue)) {
-      console.log(
-        `Error: Invalid host value for channel ${channelIndex}, binding ${binding.id}`
+      logError(
+        `Invalid host value for channel ${channelIndex}, binding ${binding.id}`
       );
       return;
     }
@@ -802,7 +799,7 @@ export class BindingCreator {
     try {
       return this.page.makeValueBinding(surfaceValue, hostValue);
     } catch (error) {
-      console.log(`Error: makeValueBinding failed (${context}): ${String(error)}`);
+      logError(`makeValueBinding failed (${context}): ${String(error)}`);
       return null;
     }
   }
@@ -822,7 +819,7 @@ export class BindingCreator {
       this.device.displayStateManager.initializePage(config.id);
 
       if (config.activation?.logMessage) {
-        console.log(config.activation.logMessage);
+        logDebug(config.activation.logMessage);
       }
 
       // Update page settings in DisplayStateManager
@@ -844,8 +841,8 @@ export class BindingCreator {
             }
           }
         } else {
-          console.log(
-            `Warning: Global variable "${varConfig.name}" not found in globalBooleanVariables`
+          logWarning(
+            `Global variable "${varConfig.name}" not found in globalBooleanVariables`
           );
         }
       }
@@ -885,22 +882,6 @@ export class BindingCreator {
           ]);
         }
       };
-    }
-  }
-
-  /**
-   * Setup master button binding for subpage activation
-   */
-  private setupMasterButton(config: BindingConfig, subPage: MR_SubPage): void {
-    const masterButtons = (this.device.master.buttons as any);
-    const button = masterButtons[config.masterButton!];
-
-    if (button) {
-      this.page.makeActionBinding(button.mSurfaceValue, subPage.mAction.mActivate);
-    } else {
-      console.log(
-        `Warning: Master button "${config.masterButton}" not found in device.master.buttons`
-      );
     }
   }
 

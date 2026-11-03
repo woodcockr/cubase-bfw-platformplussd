@@ -286,18 +286,21 @@ The Selected Track section has multiple sub-pages: **SendsQC**, **EQ**, **PreFil
 | Control | Function |
 |---------|----------|
 | Fader | Send MIDI CC Value (0-127) |
-| Encoder | Select MIDI CC Number |
-| Scribble Strip | Show Current CC Number |
+| Encoder | Select MIDI CC Number (one CC per detent, 0-127) |
+| Scribble Strip | Show CC Name and Fader Value |
 
 **Configuration**:
-- Each fader can be assigned a different CC number
-- CC values sent as 0-127 (mapped from fader 0-100%)
-- Use encoder to select which CC each fader controls
+- Channel assignments and names come from `midi-cc-config.js` in the driver folder (see [README.md](README.md#midi-cc-configuration))
+- Defaults: CC1 Dynamics, CC11 Expression, CC2 Breath, CC21 Vibrato, CC7 Volume, CC16, CC17, CC18
+- CC values sent as 0-127 (mapped from fader 0-100%), only while the fader is touched
+- Encoder selection is temporary; it resets to the configured CC when the script reloads
 
 **Display**:
-- LCD shows current CC number selected for each channel
+- Top row: fader value; shows `CC  n` while the encoder is turned, until the fader moves
+- Bottom row: CC name (abbreviated to fit); configured name when the configured CC is selected
 
 **Notes**:
+- Turning an encoder never sends a MIDI CC
 - Custom handlers manage MIDI output
 - All buttons have dummy bindings (no function)
 

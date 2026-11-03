@@ -1,6 +1,7 @@
 import type { IconPlatformMplus } from "../icon_elements";
 import { jogOptions } from "../config";
 import { ContextStateVariable } from "../util";
+import { logInfo, logWarning } from "../logger";
 import {
   createJogState,
   JogController,
@@ -81,7 +82,7 @@ export function setupJogBindings(
         if (objectID >= 0 && objectID === transportObjectID.get(context)
           && shuttleAvailable.get(context) && shuttleParameterTags.indexOf(tag) >= 0) {
           if (jogOptions.diagnostics && jogOptions.traceValues) {
-            console.log("Shuttle write tag=" + tag + " value=" + value);
+            logInfo("Shuttle write tag=" + tag + " value=" + value);
           }
           stateVariable.set(context, state);
           directAccess.setParameterProcessValue(mapping, objectID, tag, value);
@@ -93,10 +94,10 @@ export function setupJogBindings(
     if (jogOptions.diagnostics && wasMoving && !state.moving) {
       const summary = activity.get(context);
       if (previousMode === "shuttle") {
-        console.log("Shuttle ended: ticks=" + summary.ticks + " fwd=" + summary.forwardTicks
+        logInfo("Shuttle ended: ticks=" + summary.ticks + " fwd=" + summary.forwardTicks
           + " rev=" + summary.reverseTicks + " peak=" + summary.peakDelta);
       } else {
-        console.log("Jog ended: ticks=" + summary.ticks + " fwd=" + summary.forwardTicks
+        logInfo("Jog ended: ticks=" + summary.ticks + " fwd=" + summary.forwardTicks
           + " rev=" + summary.reverseTicks + " peak=" + summary.peakDelta
           + " rebases=" + summary.rebases
           + " pos=" + state.position.toFixed(4));
@@ -108,7 +109,7 @@ export function setupJogBindings(
   function logShuttleRelease(state: JogState, reason: string) {
     if (jogOptions.diagnostics && jogOptions.traceValues && state.mode === "shuttle"
       && (state.shuttleActiveTag >= 0 || state.shuttlePendingTag >= 0)) {
-      console.log("Shuttle release reason=" + reason + " active=" + state.shuttleActiveTag
+      logInfo("Shuttle release reason=" + reason + " active=" + state.shuttleActiveTag
         + " pending=" + state.shuttlePendingTag);
     }
   }
@@ -133,7 +134,7 @@ export function setupJogBindings(
         if (tag === jogParameterTags.active) hasActive = true;
         if (shuttleParameterTags.indexOf(tag) >= 0) shuttleTagCount++;
         if (jogOptions.diagnostics && (tag === jogParameterTags.position || tag === jogParameterTags.active)) {
-          console.log("Jog parameter " + tag + ": " + directAccess.getParameterTitle(mapping, objectID, tag, 128)
+          logInfo("Jog parameter " + tag + ": " + directAccess.getParameterTitle(mapping, objectID, tag, 128)
             + ", process=" + directAccess.getParameterProcessValue(mapping, objectID, tag)
             + ", default=" + directAccess.getParameterDefaultProcessValue(mapping, objectID, tag)
             + ", display=" + directAccess.getParameterDisplayValue(mapping, objectID, tag));
@@ -149,12 +150,10 @@ export function setupJogBindings(
       if (isFinite(position) && position >= 0 && position <= 1) state.position = position;
       stateVariable.set(context, state);
     }
-    console.log(ready
-      ? "Direct Access Scrub ready (single CC60 relative binding)"
-      : "Direct Access Scrub disabled: transport parameters 4041/4044 unavailable");
-    console.log(shuttleAvailable.get(context)
-      ? "Direct Access Shuttle ready (latched selector; starts at Stop)"
-      : "Direct Access Shuttle disabled: native speed parameters unavailable");
+    if (ready) logInfo("Direct Access Scrub ready (single CC60 relative binding)");
+    else logWarning("Direct Access Scrub disabled: transport parameters 4041/4044 unavailable");
+    if (shuttleAvailable.get(context)) logInfo("Direct Access Shuttle ready (latched selector; starts at Stop)");
+    else logWarning("Direct Access Shuttle disabled: native speed parameters unavailable");
   }
 
   function selectMode(context: MR_ActiveDevice, mapping: MR_ActiveMapping, mode: JogState["mode"]) {
@@ -163,7 +162,7 @@ export function setupJogBindings(
       state.mode = mode;
     });
     if (jogOptions.diagnostics && jogOptions.traceValues) {
-      console.log("Jog mode selected=" + mode);
+      logInfo("Jog mode selected=" + mode);
     }
     device.lcdManager.setIndicator2Text(context, mode === "nudge" ? "N" : mode === "scrub" ? "S" : "H");
   }
@@ -176,7 +175,7 @@ export function setupJogBindings(
     (context, mapping, value) => {
       recordingKnown.set(context, true);
       waitingNoticeShown.set(context, false);
-      if (jogOptions.diagnostics) console.log("Jog recording state=" + value);
+      if (jogOptions.diagnostics) logInfo("Jog recording state=" + value);
       withController(context, mapping, (controller, state) => {
         state.recording = value > 0;
         if (state.recording) {
@@ -188,16 +187,16 @@ export function setupJogBindings(
 
   device.transport.jog_wheel.mOnInput = (_context, value, delta) => {
     if (jogOptions.diagnostics && jogOptions.traceValues) {
-      console.log("Jog CC60 raw=" + Math.round(value * 127) + " delta=" + delta);
+      logInfo("Jog CC60 raw=" + Math.round(value * 127) + " delta=" + delta);
     }
   };
 
   device.transport.jog_wheel.mOnTurn = (context, delta) => {
-    if (jogOptions.diagnostics && jogOptions.traceValues) console.log("Jog input delta=" + delta);
+    if (jogOptions.diagnostics && jogOptions.traceValues) logInfo("Jog input delta=" + delta);
     if (!currentMapping) return true;
     if (!recordingKnown.get(context)) {
       if (!waitingNoticeShown.get(context)) {
-        console.log("Jog input blocked: waiting for Cubase recording-state feedback");
+        logInfo("Jog input blocked: waiting for Cubase recording-state feedback");
         waitingNoticeShown.set(context, true);
       }
       return true;
@@ -207,7 +206,7 @@ export function setupJogBindings(
     if (state.recording) return true;
     if (state.mode === "nudge") {
       if (jogOptions.diagnostics && jogOptions.traceValues) {
-        console.log("Nudge command direction=" + (delta > 0 ? "right" : "left")
+        logInfo("Nudge command direction=" + (delta > 0 ? "right" : "left")
           + " ticks=" + Math.abs(delta));
       }
       return false;
@@ -233,7 +232,7 @@ export function setupJogBindings(
     withController(context, mapping, controller => controller.turn(delta, Date.now()));
     const selectedIndex = stateVariable.get(context).shuttlePositionIndex;
     if (jogOptions.diagnostics && jogOptions.traceValues && selectedIndex !== previousSelectorIndex) {
-      console.log("Shuttle selector index=" + selectedIndex
+      logInfo("Shuttle selector index=" + selectedIndex
         + " tag=" + shuttleSelectorTags[selectedIndex]);
     }
     return true;
@@ -256,7 +255,7 @@ export function setupJogBindings(
         withController(context, currentMapping, (controller, state) => {
           if (button === device.transport.buttons.record) state.recording = true;
           if (jogOptions.diagnostics && jogOptions.traceValues) {
-            console.log("Transport button input=" + buttonName + " value=" + value);
+            logInfo("Transport button input=" + buttonName + " value=" + value);
           }
           logShuttleRelease(state, "transport button " + buttonName);
           controller.release();
@@ -282,7 +281,7 @@ export function setupJogBindings(
   directAccess.mOnParameterChange = (context, mapping, objectID, tag) => {
     if (jogOptions.diagnostics && jogOptions.traceValues
       && (tag === jogParameterTags.active || tag === jogParameterTags.position || shuttleParameterTags.indexOf(tag) >= 0)) {
-      console.log("Jog change " + tag + ": process=" + directAccess.getParameterProcessValue(mapping, objectID, tag)
+      logInfo("Jog change " + tag + ": process=" + directAccess.getParameterProcessValue(mapping, objectID, tag)
         + ", display=" + directAccess.getParameterDisplayValue(mapping, objectID, tag));
     }
   };
@@ -324,7 +323,7 @@ export function setupJogBindings(
       const state = stateVariable.get(context);
       if (jogOptions.diagnostics && jogOptions.traceValues
         && state.mode === "shuttle" && state.shuttlePendingTag >= 0) {
-        console.log("Shuttle idle pending=" + state.shuttlePendingTag
+        logInfo("Shuttle idle pending=" + state.shuttlePendingTag
           + " wait=" + state.shuttleWaitCycles);
       }
       withController(context, mapping, controller => controller.idle(Date.now()));

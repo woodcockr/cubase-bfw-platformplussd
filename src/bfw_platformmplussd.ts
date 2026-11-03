@@ -18,6 +18,7 @@ import { decoratePage } from "./decorators/page";
 import { decorateSurface } from "./decorators/surface";
 import { setupDeviceConnection } from "./midi/connection"
 import { makeTimerUtils } from "./util";
+import { logInfo } from "./logger";
 import { createGlobalBooleanVariables, bindDeviceToMidi } from "./midi/binding"
 import { IconPlatformMplus } from "./icon_elements";
 import { makePageWithDefaults } from "./master_controls"
@@ -40,7 +41,7 @@ const isAPIVersion1_1 = device.channelControls[0].fader.mSurfaceValue.mTouchStat
 const activationCallbacks = setupDeviceConnection(deviceDriver, device);
 
 activationCallbacks.addCallback(() => {
-    console.log('Icon Platform M+ Activated');
+    logInfo('Icon Platform M+ Activated');
 });
 
 const globalBooleanVariables = createGlobalBooleanVariables();
