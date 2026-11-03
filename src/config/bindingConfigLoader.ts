@@ -35,12 +35,6 @@ export class BindingConfigValidator {
       errors.push(...bindingErrors);
     }
 
-    // Validate master button reference
-    if (config.masterButton && typeof config.masterButton !== 'string') {
-      errors.push(
-        `BindingConfig "${config.id}": masterButton must be a string`
-      );
-    }
 
     // Validate activation config
     if (config.activation) {
@@ -270,10 +264,6 @@ export class BindingConfigBuilder {
     return this;
   }
 
-  withMasterButton(buttonName: string): this {
-    this.config.masterButton = buttonName;
-    return this;
-  }
 
   withHostAccessor(hostAccessor: string): this {
     this.config.hostAccessor = hostAccessor;

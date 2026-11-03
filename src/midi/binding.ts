@@ -6,6 +6,7 @@ import {
   TimerUtils,
 } from "../util";
 import { PortPair } from "./PortPair";
+import { debugLogsEnabled, logDebug } from "../logger";
 import { ActivationCallbacks } from "./connection";
 
 /** Declares some global context-dependent variables that (may) affect multiple devices */
@@ -200,7 +201,7 @@ export function bindDeviceToMidi(
 
     // Scribble Strip - Track Title
     channel.scribbleStrip.trackTitle.mOnTitleChange = (context, title, valueTitle) => {
-      console.log(`scribbleStrip.trackTitle.mOnTitleChange updated for channel ${title}:${valueTitle}`);
+      if (debugLogsEnabled) logDebug(`scribbleStrip.trackTitle.mOnTitleChange updated for channel ${title}:${valueTitle}`);
       device.displayStateManager.updateTrackTitle(context, channelIndex, title, valueTitle);
     };
 

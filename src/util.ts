@@ -1,3 +1,5 @@
+import { logWarning } from "./logger";
+
 export function createElements<E>(count: number, factoryFunction: (index: number) => E): E[] {
   const elements = [];
   for (let index = 0; index < count; index++) {
@@ -59,12 +61,13 @@ export function makeTimerUtils(
   > = {};
 
   let isIdleCallbackSupported = isAPIVersion1_1;
+  let idleWarningShown = false;
 
   // Cubase 13 and above: Register an Idle Callback
   driver.mOnIdle = function (context) {
-    if (!isIdleCallbackSupported) {
-      console.log("Error: Idle callbacks are not supported in this version of Cubase."
-      );
+    if (!isIdleCallbackSupported && !idleWarningShown) {
+      idleWarningShown = true;
+      logWarning("Idle callbacks are not supported in this version of Cubase.");
     }
 
     tick(context);

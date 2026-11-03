@@ -14,7 +14,6 @@ export const MIXER_CONFIG: BindingConfig = {
   id: 'mixer',
   name: 'Mixer',
   description: 'Track mixer with volume and pan controls',
-  masterButton: 'subPageMixer',
   hostAccessor: 'hostMixerBankZone',
 
   bindings: {

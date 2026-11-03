@@ -18,6 +18,7 @@ import { decoratePage } from "./decorators/page";
 import { decorateSurface } from "./decorators/surface";
 import { setupDeviceConnection } from "./midi/connection"
 import { makeTimerUtils } from "./util";
+import { logInfo } from "./logger";
 import { createGlobalBooleanVariables, bindDeviceToMidi } from "./midi/binding"
 import { IconPlatformMplus } from "./icon_elements";
 import { makePageWithDefaults } from "./master_controls"
@@ -40,7 +41,7 @@ const isAPIVersion1_1 = device.channelControls[0].fader.mSurfaceValue.mTouchStat
 const activationCallbacks = setupDeviceConnection(deviceDriver, device);
 
 activationCallbacks.addCallback(() => {
-    console.log('Icon Platform M+ Activated');
+    logInfo('Icon Platform M+ Activated');
 });
 
 const globalBooleanVariables = createGlobalBooleanVariables();
@@ -51,7 +52,8 @@ activationCallbacks.addCallback((context) => {
   globalBooleanVariables.areMotorsActive.set(context, true);
 });
 
-var page = decoratePage(makePageWithDefaults('Main', device, deviceDriver, globalBooleanVariables, activationCallbacks), surface)
+const defaultPage = makePageWithDefaults('Main', device, deviceDriver, globalBooleanVariables, activationCallbacks)
+var page = decoratePage(defaultPage, surface)
 // Dummy variable for unused controls in subpages
 const dummy = page.mCustom.makeHostValueVariable("null");
 var faderSubPageArea = page.makeSubPageArea('MixerArea')
@@ -72,10 +74,12 @@ const shiftSubPage = shift.makeSubPages(page, faderSubPageArea, device, globalBo
 
 var selectedTrack=page.mHostAccess.mTrackSelection.mMixerChannel
 var daSelectedTrack=page.mHostAccess.makeDirectAccess(selectedTrack)
+defaultPage.onActivate.addCallback((_activeDevice, activeMapping) => daSelectedTrack.activate(activeMapping))
+defaultPage.onDeactivate.addCallback((_activeDevice, activeMapping) => daSelectedTrack.deactivate(activeMapping))
 
 var refreshRate=5 // This is for setting up the latency for updating we're comfortable with
 var currentCount=0
-page.mOnIdle=function(activeDevice,activeMapping){
+defaultPage.onIdle.addCallback((activeDevice,activeMapping) => {
 
     currentCount++
     if(currentCount>=refreshRate){
@@ -83,7 +87,7 @@ page.mOnIdle=function(activeDevice,activeMapping){
         currentCount=0
         refreshSelected(activeDevice,activeMapping)
     }
-}
+})
 // ********
 
 // Bind the physical Mixer button to activate the Shift page

@@ -1,6 +1,7 @@
 // @ts-expect-error No type defs available
 import abbreviate from "abbreviate";
 import { IconPlatformMplus } from "../icon_elements";
+import { debugLogsEnabled, logDebug } from "../logger";
 
 export class LcdManager {
   static readonly channelWidth = 6;
@@ -62,7 +63,7 @@ export class LcdManager {
   setTextLine(context: MR_ActiveDevice, row: number, text: string) {
     var blank = Array(56).join(" ")
     var fullText = (text + blank).slice(0, 56) // ensure to always clear the entire row
-    console.log(`Setting LCD row ${row} text to: "${fullText}"`)
+    if (debugLogsEnabled) logDebug(`Setting LCD row ${row} text to: "${fullText}"`)
     this.sendText(context, row * 56, fullText);
 
     // Immediately restore indicators after ANY text line write
@@ -79,7 +80,7 @@ export class LcdManager {
     while (text.length < 7) {
       text += " ";
     }
-    console.log(`Setting LCD row ${row} channel ${channelIndex} text to: "${text}"`)
+    if (debugLogsEnabled) logDebug(`Setting LCD row ${row} channel ${channelIndex} text to: "${text}"`)
     this.sendText(context, row * 56 + (channelIndex % 8) * 7, text);
 
     // Immediately restore indicators if we just wrote to channel 7
@@ -139,7 +140,7 @@ export class LcdManager {
   }
 
   clearDisplays(context: MR_ActiveDevice) {
-    console.log("Clearing displays");
+    logDebug("Clearing displays");
     this.sendText(context, 0, LcdManager.makeSpaces(112));
   }
 }

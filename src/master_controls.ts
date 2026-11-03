@@ -1,25 +1,33 @@
 import { IconPlatformMplus  } from "./icon_elements"
 import { GlobalBooleanVariables } from "./midi/binding";
 import { ActivationCallbacks } from "./midi/connection"
+import { CallbackCollection, makeCallbackCollection } from "./util";
+import { setupJogBindings } from "./midi/jog";
+
+interface DefaultMappingPage extends MR_FactoryMappingPage {
+  onActivate: CallbackCollection<[MR_ActiveDevice, MR_ActiveMapping]>;
+  onDeactivate: CallbackCollection<[MR_ActiveDevice, MR_ActiveMapping]>;
+  onIdle: CallbackCollection<[MR_ActiveDevice, MR_ActiveMapping]>;
+}
 
 // Mappings for the default areas - transport, zoom, knob
-export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, _globalBooleanVariables: GlobalBooleanVariables, _activationCallbacks: ActivationCallbacks ) : MR_FactoryMappingPage{
-  var page = deviceDriver.mMapping.makePage(name)
+export function makePageWithDefaults(name: string, device: IconPlatformMplus, deviceDriver: MR_DeviceDriver, _globalBooleanVariables: GlobalBooleanVariables, _activationCallbacks: ActivationCallbacks ) : DefaultMappingPage{
+  var page = deviceDriver.mMapping.makePage(name) as DefaultMappingPage
+  page.onActivate = makeCallbackCollection(page, "mOnActivate");
+  page.onDeactivate = makeCallbackCollection(page, "mOnDeactivate");
+  page.onIdle = makeCallbackCollection(page, "mOnIdle");
 
   var jogSubPageArea = page.makeSubPageArea('Jog')
   var zoomSubPageArea = page.makeSubPageArea('Zoom')
 
   var subPageJogNudge = jogSubPageArea.makeSubPage('Nudge')
-  subPageJogNudge.mOnActivate = (activeDevice: MR_ActiveDevice) => {
-    // Show Nudge mode indicator on LCD (position 55 - Indicator2Text)
-    device.lcdManager.setIndicator2Text(activeDevice, 'N')
-  }
 
   var subPageJogScrub = jogSubPageArea.makeSubPage('Scrub')
-  subPageJogScrub.mOnActivate = (activeDevice: MR_ActiveDevice) => {
-    // Show Scrub mode indicator on LCD (position 55 - Indicator2Text)
-    device.lcdManager.setIndicator2Text(activeDevice, 'S')
-  }
+  var subPageJogShuttle = jogSubPageArea.makeSubPage('Shuttle')
+  const jog = setupJogBindings(page, deviceDriver.mSurface, device, subPageJogNudge, subPageJogScrub, subPageJogShuttle);
+  page.onActivate.addCallback(jog.activate);
+  page.onDeactivate.addCallback(jog.deactivate);
+  page.onIdle.addCallback(jog.idle);
 
   var subPageJogZoom = zoomSubPageArea.makeSubPage('Zoom')
   subPageJogZoom.mOnActivate = (activeDevice: MR_ActiveDevice) => {
@@ -72,10 +80,7 @@ export function makePageWithDefaults(name: string, device: IconPlatformMplus, de
   // Nudge
   page.makeCommandBinding(device.transport.jog_wheel.mJogLeftValue, 'Transport', 'Nudge Cursor Left').setSubPage(subPageJogNudge)
   page.makeCommandBinding(device.transport.jog_wheel.mJogRightValue, 'Transport', 'Nudge Cursor Right').setSubPage(subPageJogNudge)
-  // Scrub (Jog in Cubase)
-  page.makeCommandBinding(device.transport.jog_wheel.mJogLeftValue, 'Transport', 'Jog Left').setSubPage(subPageJogScrub)
-  page.makeCommandBinding(device.transport.jog_wheel.mJogRightValue, 'Transport', 'Jog Right').setSubPage(subPageJogScrub)
-  // Switch between Nudge and Scrub by tapping knob
+  // Switch between Nudge, Scrub and Shuttle by tapping knob
   page.makeActionBinding(device.transport.jog_wheel.mPushValue, jogSubPageArea.mAction.mNext)
 
 

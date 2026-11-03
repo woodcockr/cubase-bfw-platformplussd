@@ -10,7 +10,6 @@ export interface BindingConfig {
   id: string;
   name: string;
   description?: string;
-  masterButton?: string; // Key in device.master.buttons (e.g., "subPageMixer")
   hostAccessor?: string; // Type of host accessor to create
   hostAccessorFactory?: HostAccessorFactory;
   bindings: BindingDefinitions;
@@ -26,7 +25,6 @@ export interface BindingConfig {
 export interface MultiSubpageConfig {
   id: string;
   subpages: BindingConfig[];
-  masterButtons?: string[]; // Master button bindings for subpage switching
 }
 
 /**

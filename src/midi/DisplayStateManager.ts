@@ -1,4 +1,5 @@
 import { LcdManager } from "./LcdManager";
+import { debugLogsEnabled, logDebug } from "../logger";
 import { DisplayLineConfiguration, LineDisplayMode } from "../config/bindingConfig";
 
 /**
@@ -248,7 +249,7 @@ export class DisplayStateManager {
       );
     }
 
-    console.log(
+    if (debugLogsEnabled) logDebug(
       `Displaying ${control} value for channel ${channelIndex}: "${displayText}" (local: ${isLocalValueMode}, global: ${isGlobalValueMode})`
     );
 
@@ -399,7 +400,7 @@ export class DisplayStateManager {
     const state = this.pageStates.get(this.activePageId);
     if (!state) return;
 
-    console.log(`Updating track title for ACTIVE page ${this.activePageId} channel ${channelIndex}: "${title}" / "${valueTitle}"`);
+    if (debugLogsEnabled) logDebug(`Updating track title for ACTIVE page ${this.activePageId} channel ${channelIndex}: "${title}" / "${valueTitle}"`);
 
     const channelData = this.ensureChannelData(state, channelIndex);
     channelData.fader.title = title;
@@ -542,7 +543,7 @@ export class DisplayStateManager {
       case 'encoderValue':
         return this.abbreviateAndCenter(channelData.encoder.displayValue);
       case 'parameterName':
-        console.log(`Displaying encoder title1/title2 for channel: "${channelData.encoder.title1}/${channelData.encoder.title2}"`);
+        if (debugLogsEnabled) logDebug(`Displaying encoder title1/title2 for channel: "${channelData.encoder.title1}/${channelData.encoder.title2}"`);
         // Use custom transform if available, otherwise use title2
         const encoderTitle = displayLineConfig.encoderTitleTransform
           ? displayLineConfig.encoderTitleTransform(channelData.encoder.title1, channelData.encoder.title2)

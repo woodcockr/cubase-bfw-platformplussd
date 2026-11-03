@@ -14,7 +14,6 @@ export const CONTROL_ROOM_CONFIG: BindingConfig = {
   id: 'controlRoom',
   name: 'Control Room',
   description: 'Control room with main, phones, and cue sends',
-  masterButton: 'subPageControlRoom',
   hostAccessor: 'controlRoom',
 
   bindings: {
