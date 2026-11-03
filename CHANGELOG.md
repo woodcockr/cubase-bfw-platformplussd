@@ -2,6 +2,15 @@
 
 All notable changes to the Icon Platform M+ MIDI Remote project will be documented in this file.
 
+## [4.1.0-rc2] - 2026-11-04
+
+Release notes: [release-notes/v4.1.0-rc2.md](release-notes/v4.1.0-rc2.md)
+
+### Fixed
+- Pressing Record when Cubase did not actually start recording no longer leaves the jog wheel blocked in all modes. The wheel now waits at most 1 s for Cubase's record feedback, and that feedback alone decides whether recording is active.
+- After a project/transport switch, Scrub and Shuttle wait for the new project's record state before accepting wheel input.
+- Scrub now starts each gesture from Cubase's current Jog position instead of the encoder's local value, so the first movement cannot jump. Encoder recentering no longer echoes a write to Cubase. This may also reduce the scrub skip-back; please report whether it does.
+
 ## [4.1.0-rc1] - 2026-11-04
 
 Release notes: [release-notes/v4.1.0-rc1.md](release-notes/v4.1.0-rc1.md)
